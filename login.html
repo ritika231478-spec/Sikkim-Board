@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Sikkim Board of School Education</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .login-wrapper {
+            min-height: calc(100vh - 200px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: radial-gradient(circle at top right, rgba(26,54,93,0.06), transparent 70%);
+        }
+        .login-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(26,54,93,0.12);
+            width: 100%;
+            max-width: 440px;
+            padding: 40px 35px;
+            border-top: 5px solid var(--primary);
+            position: relative;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-header img {
+            height: 70px;
+            margin-bottom: 15px;
+        }
+        .login-header h2 {
+            color: var(--primary);
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+        }
+        .login-header p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+        .input-group-custom {
+            position: relative;
+        }
+        .input-group-custom input {
+            padding-left: 42px;
+            padding-right: 42px;
+        }
+        .input-group-custom .input-icon-left {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        .input-group-custom .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-light);
+            background: none;
+            border: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="container">
+            <span>Official Portal - Sikkim Board of School Education</span>
+            <div>
+                <a href="index.html"><i class="fas fa-home me-1"></i>Back to Home</a>
+                <a href="results.html"><i class="fas fa-poll-h me-1"></i>Check Results</a>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <img src="Logo.png" alt="SBSE Logo">
+                    <div class="logo-text">
+                        <h1>Sikkim Board</h1>
+                        <p>of School Education</p>
+                    </div>
+                </a>
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="results.html">Results Portal</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="Logo.png" alt="SBSE Seal">
+                <h2>Admin Control Center</h2>
+                <p>Sign in to manage students, sessions & marks</p>
+            </div>
+
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="username">Administrator Username <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                    <div class="input-group-custom">
+                        <i class="fas fa-user input-icon-left"></i>
+                        <input type="text" id="username" class="form-control" placeholder="Enter username" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                    <div class="input-group-custom">
+                        <i class="fas fa-lock input-icon-left"></i>
+                        <input type="password" id="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" id="togglePasswordBtn" title="Toggle password visibility">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 0.9rem;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-gray);">
+                        <input type="checkbox" id="rememberMe" checked> Remember session
+                    </label>
+                    <a href="index.html" style="color: var(--primary-light);">Need help?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" style="width: 100%; padding: 12px; font-size: 1.05rem;">
+                    <i class="fas fa-sign-in-alt me-2"></i>Sign In to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom" style="border: none; padding: 0;">
+                <p>&copy; 2026 Sikkim Board of School Education. Authorized personnel access only.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script>
+        // Check if already authenticated
+        if (localStorage.getItem('sbse_admin_logged_in') === 'true') {
+            window.location.href = 'admin.html';
+        }
+
+        // Toggle password visibility
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        toggleBtn?.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+
+        // Form submission
+        document.getElementById('adminLoginForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (username.toLowerCase() === 'sikkim board of school education' && password === 'sikkimboard@2026') {
+                localStorage.setItem('sbse_admin_logged_in', 'true');
+                localStorage.setItem('sbse_admin_login_time', new Date().toISOString());
+                
+                showToastNotification('Authentication successful! Welcome Administrator.', 'success');
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 800);
+            } else {
+                showToastNotification('Invalid username or password. Please try again.', 'error');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        });
+
+        function showToastNotification(message, type) {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 8px; color: white; font-weight: 500; z-index: 10000; max-width: 420px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}" style="font-size: 1.2rem;"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            notification.style.cssText = `
+                position: fixed;
+                top: 25px;
+                right: 25px;
+                z-index: 10000;
+                background: ${type === 'success' ? 'linear-gradient(135deg, #2f855a, #48bb78)' : 'linear-gradient(135deg, #c53030, #e53e3e)'};
+                border-radius: 8px;
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3500);
+        }
+    </script>
+</body>
+</html>

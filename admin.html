@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard & Student Management - SBSE</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 20px 10px;
+        }
+        .modal-container {
+            background: white;
+            border-radius: 16px;
+            max-width: 950px;
+            margin: 0 auto;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: scaleIn 0.3s ease;
+        }
+        .modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 16px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.6rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+            background: white;
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .search-box {
+            flex: 1;
+            min-width: 240px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+        }
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        .action-btns-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        .badge-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar with Auth Details -->
+    <div class="top-bar">
+        <div class="container-wide">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <span><i class="fas fa-university me-2"></i>Sikkim Board of School Education - Admin Center</span>
+                <span class="admin-top-badge"><i class="fas fa-shield-alt text-warning"></i> Administrator Logged In</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <a href="index.html" target="_blank"><i class="fas fa-external-link-alt me-1"></i>Public Website</a>
+                <a href="results.html" target="_blank"><i class="fas fa-poll me-1"></i>Results Portal</a>
+                <button class="btn-logout" id="logoutBtn" title="Logout from administrator session">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="container-wide">
+            <div class="header-content">
+                <a href="admin.html" class="logo">
+                    <img src="Logo.png" alt="SBSE Logo">
+                    <div class="logo-text">
+                        <h1>Sikkim Board of School Education</h1>
+                        <p>Administration & Student Control Panel</p>
+                    </div>
+                </a>
+                <div class="menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="act.html">The Act</a></li>
+                        <li><a href="examinations.html">Examinations</a></li>
+                        <li><a href="results.html">Results</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li>
+                            <button class="btn btn-primary" onclick="switchTab('enroll-tab')" style="padding: 8px 16px; font-size: 0.9rem;">
+                                <i class="fas fa-user-plus me-1"></i> Enroll Student
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="content-section" style="padding-top: 25px;">
+        <div class="container-wide">
+
+            <!-- DASHBOARD STATS COUNTERS -->
+            <div class="admin-stats-grid">
+                <div class="stat-card card-blue">
+                    <div class="stat-icon bg-blue">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h4 id="statTotalStudents">0</h4>
+                        <p>Total Enrolled Students</p>
+                    </div>
+                </div>
+
+                <div class="stat-card card-green">
+                    <div class="stat-icon bg-green">
+                        <i class="fas fa-book-reader"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h4 id="stat10thStudents">0</h4>
+                        <p>Class 10th (Matriculation)</p>
+                    </div>
+                </div>
+
+                <div class="stat-card card-gold">
+                    <div class="stat-icon bg-gold">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h4 id="stat12thStudents">0</h4>
+                        <p>Class 12th (Intermediate)</p>
+                    </div>
+                </div>
+
+                <div class="stat-card card-purple">
+                    <div class="stat-icon bg-purple">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h4 id="statResultsDeclared">0</h4>
+                        <p>Results Declared</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN TABS NAVIGATION -->
+            <div class="admin-tab-nav">
+                <button class="admin-tab-btn active" id="tabBtnDashboard" onclick="switchTab('dashboard-tab')">
+                    <i class="fas fa-th-list"></i> Enrolled Students Directory
+                </button>
+                <button class="admin-tab-btn" id="tabBtnEnroll" onclick="switchTab('enroll-tab')">
+                    <i class="fas fa-user-plus"></i> Enroll Student (All Fields & Subjects)
+                </button>
+                <button class="admin-tab-btn" id="tabBtnMarks" onclick="switchTab('marks-tab')">
+                    <i class="fas fa-marker"></i> Enter & Manage Marks (Auto-Flow)
+                </button>
+            </div>
+
+            <!-- ================= TAB 1: DASHBOARD & STUDENTS DIRECTORY (SPACIOUS WIDE VIEW) ================= -->
+            <div id="dashboard-tab" class="admin-tab-content active">
+                <!-- Search & Filters -->
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="studentSearchInput" placeholder="SEARCH BY NAME, ROLL NO., FATHER'S NAME, SESSION...">
+                    </div>
+                    <div>
+                        <select id="courseFilter" class="form-control input-uppercase" style="width: auto; padding: 10px 14px;">
+                            <option value="">ALL COURSES</option>
+                            <option value="MATRICULATION">MATRICULATION (10th)</option>
+                            <option value="INTERMEDIATE">INTERMEDIATE (12th)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="sessionFilter" class="form-control input-uppercase" style="width: auto; padding: 10px 14px;">
+                            <option value="">ALL SESSIONS</option>
+                            <option value="2025-2026">SESSION 2025-2026</option>
+                            <option value="2024-2025">SESSION 2024-2025</option>
+                            <option value="2026-2027">SESSION 2026-2027</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" style="color: var(--primary); border-color: var(--border);" onclick="resetFilters()">
+                            <i class="fas fa-undo me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enrolled Students Directory Table (Wide, Uncongested View) -->
+                <div class="wide-table-wrapper">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0; color: var(--primary); font-size: 1.25rem;">
+                                <i class="fas fa-users me-2"></i>Enrolled Students Directory & Records
+                            </h3>
+                            <small style="color: var(--text-gray);">Full biographical and examination information of registered candidates</small>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span id="filteredCountBadge" style="font-size: 0.9rem; color: var(--text-gray); font-weight: 700; background: #ebf8ff; padding: 4px 12px; border-radius: 12px;">Showing 0 students</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="data-table-wide" style="margin: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="width: 130px;">Roll No.</th>
+                                    <th style="width: 180px;">Student Name</th>
+                                    <th style="width: 160px;">Father's Name</th>
+                                    <th style="width: 160px;">Mother's Name</th>
+                                    <th style="width: 110px;">DOB (DD/MM/YYYY)</th>
+                                    <th style="width: 110px;">Session</th>
+                                    <th style="width: 130px;">Course</th>
+                                    <th style="min-width: 220px;">Permanent Address</th>
+                                    <th style="width: 110px;">Result Status</th>
+                                    <th style="width: 160px; text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 2: ENROLL NEW STUDENT (UPPERCASE & SUBJECTS SELECTION) ================= -->
+            <div id="enroll-tab" class="admin-tab-content">
+                <div class="card-lift" style="background: white; padding: 35px 30px; border-radius: var(--radius); box-shadow: var(--shadow); max-width: 1050px; margin: 0 auto;">
+                    <div style="border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 25px;">
+                        <h3 style="color: var(--primary); font-size: 1.4rem;">
+                            <i class="fas fa-user-plus me-2"></i>New Student Enrollment Form
+                        </h3>
+                        <p style="color: var(--text-gray); font-size: 0.95rem;">
+                            All data is recorded in <strong>CAPITAL LETTERS</strong>. Date of birth is saved in <strong>DD/MM/YYYY</strong> format.
+                        </p>
+                    </div>
+
+                    <form id="enrollStudentForm" class="uppercase-form">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label for="studentName">Student Full Name <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <input type="text" id="studentName" class="form-control" placeholder="E.G. AASHISH BAGH" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="rollNumber">Roll Number <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <input type="text" id="rollNumber" class="form-control" placeholder="E.G. SBSE-2026-105" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="registrationNumber">Registration Number <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <input type="text" id="registrationNumber" class="form-control" placeholder="E.G. SBSE/REG/2025/1102" required>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label for="dob">Date of Birth (DD/MM/YYYY) <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <div style="display: flex; gap: 6px;">
+                                    <input type="text" id="dob" class="form-control" placeholder="DD/MM/YYYY" maxlength="10" required>
+                                    <input type="date" id="dobPickerHidden" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+                                    <button type="button" class="btn btn-secondary" id="btnDobCalendar" title="Pick from calendar" style="padding: 10px 14px; border: 1px solid var(--border); background: #f8fafc;">
+                                        <i class="fas fa-calendar-alt text-primary"></i>
+                                    </button>
+                                </div>
+                                <small style="color: var(--text-gray); font-size: 0.78rem;">Format: DD/MM/YYYY (e.g. 01/01/1990)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="fatherName">Father's Name <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <input type="text" id="fatherName" class="form-control" placeholder="E.G. PITAMBAR BAGH" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="motherName">Mother's Name <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <input type="text" id="motherName" class="form-control" placeholder="E.G. RANI BAGH" required>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="courseSelect">Course / Level <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <select id="courseSelect" class="form-control" required>
+                                    <option value="">-- SELECT COURSE --</option>
+                                    <option value="MATRICULATION">MATRICULATION (10th)</option>
+                                    <option value="INTERMEDIATE">INTERMEDIATE (12th)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sessionSelect">Academic Session <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <select id="sessionSelect" class="form-control" required>
+                                    <option value="2025-2026">2025-2026</option>
+                                    <option value="2024-2025">2024-2025</option>
+                                    <option value="2026-2027">2026-2027</option>
+                                    <option value="2023-2024">2023-2024</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="form-group">
+                                <label for="passingYear">Examination / Passing Year <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <input type="number" id="passingYear" class="form-control" min="2000" max="2035" value="2026" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="marksheetIssueDate">Date of Issue (DD/MM/YYYY) <small style="color: #718096; font-weight: normal;">(August of Final Year, Non-Sunday)</small></label>
+                                <input type="text" id="marksheetIssueDate" class="form-control" placeholder="DD/MM/YYYY (E.G. 18/08/2026)">
+                            </div>
+                        </div>
+
+                        <!-- DYNAMIC SUBJECT SELECTION PICKER (APPEARS ON COURSE SELECTION) -->
+                        <div id="subjectPickerSection" style="display: none;" class="subject-picker-container">
+                            <div class="subject-picker-header">
+                                <h4><i class="fas fa-book-reader text-primary"></i> Select Examination Subjects for this Student</h4>
+                                <div class="subject-picker-actions">
+                                    <span class="badge-subject-count" id="selectedSubjectsCount">0 Subjects Selected</span>
+                                    <button type="button" class="btn btn-sm" id="btnSelectCoreDefaults" style="padding: 4px 10px; font-size: 0.8rem; background: #ebf8ff; border: 1px solid #3182ce; color: #2b6cb0;">
+                                        <i class="fas fa-check-double me-1"></i>Select 5-6 Core Subjects
+                                    </button>
+                                    <button type="button" class="btn btn-sm" id="btnClearSubjects" style="padding: 4px 10px; font-size: 0.8rem; background: #fff; border: 1px solid #cbd5e0; color: #4a5568;">
+                                        Clear Selection
+                                    </button>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 12px;">
+                                Check the subjects this student is registered for (referenced from official NIOS subject scheme).
+                            </p>
+                            <div id="subjectGroupsContainer"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Full Permanent Address <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <textarea id="address" class="form-control" rows="2" style="min-height: 80px;" placeholder="HOUSE/WARD, STREET, DISTRICT, PIN CODE, STATE" required></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 30px;">
+                            <button type="submit" class="btn btn-primary" id="btnSaveStudentOnly">
+                                <i class="fas fa-save me-2"></i>Save Student Details
+                            </button>
+                            <button type="button" class="btn btn-success" id="btnSaveAndAutoFlow" style="background: #2b6cb0; color: white;">
+                                <i class="fas fa-arrow-right me-2"></i>Save & Proceed to Enter Marks (Auto-Flow)
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('enrollStudentForm').reset(); document.getElementById('subjectPickerSection').style.display='none';" style="color: var(--text-gray); border-color: var(--border);">
+                                <i class="fas fa-times me-2"></i>Clear Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ================= TAB 3: ENTER & MANAGE MARKS (TYPE-TO-SEARCH & AUTO-FLOW) ================= -->
+            <div id="marks-tab" class="admin-tab-content">
+                <div class="grid-2">
+                    <!-- Left: Select Student with Type-to-Search Autocomplete -->
+                    <div>
+                        <div class="card-lift" style="background: white; padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 25px;">
+                            <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.25rem;">
+                                <i class="fas fa-search me-2"></i>Select Enrolled Student
+                            </h3>
+
+                            <div class="form-group">
+                                <label for="studentSearchSelect">Search Student by Name or Roll Number <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                                <div class="search-select-wrapper">
+                                    <input type="text" id="studentSearchSelect" class="search-select-input uppercase-form" placeholder="Type student name or roll number (e.g. Aashish or 123)..." autocomplete="off">
+                                    <i class="fas fa-search search-select-icon"></i>
+                                    <div id="studentSearchResultsDropdown" class="search-results-dropdown"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 6px;">
+                                    <small class="text-muted" style="color: var(--text-gray); font-size: 0.82rem;">
+                                        <i class="fas fa-keyboard me-1"></i>Type above for instant matching, or pick from dropdown:
+                                    </small>
+                                    <select id="studentSelect" class="form-control" style="width: auto; max-width: 100%; font-size: 0.85rem; padding: 4px 10px; height: auto;">
+                                        <option value="">-- Or choose from list --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Student Info Card (Active on selection) -->
+                            <div id="selectedStudentPill" class="student-flow-pill" style="display: none;">
+                                <h4><i class="fas fa-id-badge"></i> <span id="pillStudentName">STUDENT NAME</span></h4>
+                                <div class="flow-details-grid">
+                                    <div><strong>Roll No:</strong> <span id="pillRoll">---</span></div>
+                                    <div><strong>Course:</strong> <span id="pillCourse">---</span></div>
+                                    <div><strong>Reg No:</strong> <span id="pillReg">---</span></div>
+                                    <div><strong>Session:</strong> <span id="pillSession">---</span></div>
+                                    <div><strong>Father:</strong> <span id="pillFather">---</span></div>
+                                    <div><strong>Mother:</strong> <span id="pillMother">---</span></div>
+                                    <div><strong>DOB:</strong> <span id="pillDob">---</span></div>
+                                    <div><strong>Address:</strong> <span id="pillAddress">---</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Calculation Summary Card -->
+                        <div class="card-lift" id="marksSummaryCard" style="background: white; padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow); display: none;">
+                            <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.2rem;">
+                                <i class="fas fa-calculator me-2"></i>Live Result Calculation
+                            </h3>
+
+                            <div class="live-score-summary">
+                                <div class="score-item">
+                                    <span class="label">Total Marks</span>
+                                    <span class="value" id="calcTotalMarks">0</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="label">Maximum</span>
+                                    <span class="value" id="calcMaxTotal">0</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="label">Percentage</span>
+                                    <span class="value" id="calcPercentage">0%</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="label">Grade</span>
+                                    <span class="value" id="calcGrade">---</span>
+                                </div>
+                                <div class="score-item">
+                                    <span class="label">Status</span>
+                                    <span class="status-badge-lg badge-pending" id="calcStatus">PENDING</span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="btn btn-secondary w-100" id="btnPreviewMarksheet" style="color: var(--primary); border: 2px solid var(--primary);">
+                                    <i class="fas fa-eye me-2"></i>Preview / Print Marksheet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Subject Marks Form -->
+                    <div>
+                        <div class="card-lift" style="background: white; padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+                                <h3 style="color: var(--primary); font-size: 1.25rem; margin: 0;">
+                                    <i class="fas fa-edit me-2"></i>Subject Marks Entry
+                                </h3>
+                                <span id="enrolledSubjectsBadge" style="font-size: 0.85rem; color: #2b6cb0; font-weight: 700; background: #ebf8ff; padding: 3px 10px; border-radius: 12px; display: none;"></span>
+                            </div>
+                            <p id="subjectInstructionText" style="color: var(--text-gray); font-size: 0.9rem; margin-bottom: 15px;">
+                                Please type or select a student from the left panel to load their registered subjects.
+                            </p>
+
+                            <form id="marksEntryForm">
+                                <div id="subjectInputsContainer">
+                                    <div style="text-align: center; padding: 40px 20px; color: var(--text-light);">
+                                        <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                                        <p>No student selected. Select a student to enter their marks.</p>
+                                    </div>
+                                </div>
+
+                                <div id="marksFormActionBtns" style="display: none; margin-top: 20px;">
+                                    <button type="submit" class="btn btn-success w-100" style="background: #2f855a; color: white; padding: 14px; font-size: 1.05rem;">
+                                        <i class="fas fa-save me-2"></i>Save Student Results
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- OFFICIAL MARKSHEET MODAL -->
+    <div id="marksheetModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header no-print">
+                <h3><i class="fas fa-certificate text-warning"></i> Sikkim Board Official Marksheet</h3>
+                <button type="button" class="modal-close-btn" onclick="closeMarksheetModal()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- PRINTABLE MARKSHEET -->
+                <div class="official-marksheet" id="printableMarksheetContent">
+                    <div class="marksheet-header">
+                        <img src="Logo.png" alt="SBSE Official Seal" class="marksheet-logo">
+                        <h2>Sikkim Board of School Education</h2>
+                        <p>Established under Sikkim Board of School Education Act No. 19 of 1978</p>
+                        <p>Government of Sikkim</p>
+                        <div class="marksheet-statement-title" id="marksheetTitleCourse">
+                            STATEMENT OF MARKS - MATRICULATION EXAMINATION
+                        </div>
+                    </div>
+
+                    <!-- Student Biodata Grid -->
+                    <div class="student-biodata-grid">
+                        <div class="bio-item">
+                            <span class="bio-label">Candidate's Name:</span>
+                            <span class="bio-val" id="msStudentName">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Roll Number:</span>
+                            <span class="bio-val" id="msRollNumber">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Father's Name:</span>
+                            <span class="bio-val" id="msFatherName">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Mother's Name:</span>
+                            <span class="bio-val" id="msMotherName">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Registration No:</span>
+                            <span class="bio-val" id="msRegNumber">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Date of Birth (DD/MM/YYYY):</span>
+                            <span class="bio-val" id="msDob">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Academic Session:</span>
+                            <span class="bio-val" id="msSession">---</span>
+                        </div>
+                        <div class="bio-item">
+                            <span class="bio-label">Examination Year:</span>
+                            <span class="bio-val" id="msYear">---</span>
+                        </div>
+                        <div class="bio-item" style="grid-column: 1 / -1;">
+                            <span class="bio-label">Permanent Address:</span>
+                            <span class="bio-val" id="msAddress">---</span>
+                        </div>
+                    </div>
+
+                    <!-- Marks Table -->
+                    <table class="marksheet-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Subject Code</th>
+                                <th style="text-align: left;">Subject Name</th>
+                                <th style="width: 90px;">Max Marks</th>
+                                <th style="width: 85px;">Theory</th>
+                                <th style="width: 85px;">Practical</th>
+                                <th style="width: 95px;">Total Marks</th>
+                                <th style="width: 90px;">Percentage</th>
+                                <th style="width: 95px;">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="msMarksTableBody">
+                            <!-- Marks will be rendered here -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" style="text-align: right; font-weight: 700;">GRAND TOTAL</td>
+                                <td id="msMaxTotal" style="font-weight: 700;">---</td>
+                                <td id="msTheoryTotal" style="font-weight: 700;">---</td>
+                                <td id="msPracticalTotal" style="font-weight: 700;">---</td>
+                                <td id="msTotalObtained" style="font-weight: 700; color: #1a365d;">---</td>
+                                <td id="msOverallPercentage" style="font-weight: 700;">---</td>
+                                <td id="msOverallGrade" style="font-weight: 700;">---</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 12px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; flex-wrap: wrap; gap: 8px;">
+                        <div>
+                            <strong>FINAL RESULT: </strong>
+                            <span id="msFinalStatusBadge" style="padding: 4px 12px; border-radius: 4px; font-weight: 700;">PASS</span>
+                        </div>
+                        <div>
+                            <strong>Division / Grade: </strong>
+                            <span id="msGradePill" style="font-weight: 700; color: #2b6cb0;">A+</span>
+                        </div>
+                        <div>
+                            <strong>Date of Issue: </strong>
+                            <span id="msIssueDate" style="font-weight: 700; color: #1a365d;">--/08/----</span>
+                        </div>
+                    </div>
+
+                    <div class="marksheet-footer">
+                        <div>
+                            <p><strong>Date of Issue: </strong><span id="msIssueDateFooter" style="font-weight: 600; color: #2d3748;">--/08/----</span></p>
+                            <p><strong>Note:</strong> Any tampering voids this document.</p>
+                            <p>For verification visit: <code>https://bsesikkim.com/results.html</code></p>
+                        </div>
+                        <div class="qr-verify-block">
+                            <div id="msQrCode" class="qrcode-wrapper"></div>
+                        </div>
+                        <div class="sign-block">
+                            <div class="sign-line"></div>
+                            <p><strong>Controller of Examinations</strong><br>Sikkim Board of School Education</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="no-print" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeMarksheetModal()">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="printCurrentMarksheet()">
+                        <i class="fas fa-print me-2"></i>Print Official Marksheet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container-wide">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>SBSE Admin</h3>
+                    <p>Manage student records, enrollment and examination results</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="examinations.html">Examinations</a></li>
+                        <li><a href="results.html">Results Portal</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Contact Helpline</h3>
+                    <p>Sikkim Board of School Education</p>
+                    <p>4th Mile Government School, J.N. Road, Gangtok East</p>
+                    <p>Email: info@bsesikkim.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Sikkim Board of School Education. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="scroll-top">↑</button>
+
+    <!-- Scripts -->
+    <script src="js/qrcode-generator.min.js"></script>
+    <script src="js/sbse-data.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        // Authentication Guard
+        if (localStorage.getItem('sbse_admin_logged_in') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        // Active marksheet student for printing
+        let currentViewingStudent = null;
+
+        // Logout
+        document.getElementById('logoutBtn')?.addEventListener('click', function() {
+            if (confirm('Are you sure you want to sign out of the Administrator Panel?')) {
+                localStorage.removeItem('sbse_admin_logged_in');
+                localStorage.removeItem('sbse_admin_login_time');
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tabId === 'dashboard-tab') {
+                document.getElementById('tabBtnDashboard')?.classList.add('active');
+                renderDashboard();
+            } else if (tabId === 'enroll-tab') {
+                document.getElementById('tabBtnEnroll')?.classList.add('active');
+            } else if (tabId === 'marks-tab') {
+                document.getElementById('tabBtnMarks')?.classList.add('active');
+                populateStudentSelectDropdown();
+            }
+
+            document.getElementById(tabId)?.classList.add('active');
+        }
+
+        // ================= DATE OF BIRTH (DD/MM/YYYY) INPUT MASKING =================
+        const dobInput = document.getElementById('dob');
+        const dobPickerHidden = document.getElementById('dobPickerHidden');
+        const btnDobCalendar = document.getElementById('btnDobCalendar');
+
+        dobInput?.addEventListener('input', function(e) {
+            let v = this.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.substring(0, 8);
+            
+            let formatted = '';
+            if (v.length > 4) {
+                formatted = `${v.substring(0, 2)}/${v.substring(2, 4)}/${v.substring(4)}`;
+            } else if (v.length > 2) {
+                formatted = `${v.substring(0, 2)}/${v.substring(2)}`;
+            } else {
+                formatted = v;
+            }
+            this.value = formatted;
+        });
+
+        btnDobCalendar?.addEventListener('click', function() {
+            try {
+                if (dobPickerHidden.showPicker) {
+                    dobPickerHidden.showPicker();
+                } else {
+                    dobPickerHidden.focus();
+                }
+            } catch(e) {
+                dobPickerHidden.focus();
+            }
+        });
+
+        dobPickerHidden?.addEventListener('change', function() {
+            if (this.value) {
+                dobInput.value = formatToDDMMYYYY(this.value);
+            }
+        });
+
+        // ================= DYNAMIC SUBJECT PICKER ON COURSE SELECTION =================
+        const courseSelect = document.getElementById('courseSelect');
+        const subjectPickerSection = document.getElementById('subjectPickerSection');
+        const subjectGroupsContainer = document.getElementById('subjectGroupsContainer');
+        const selectedSubjectsCount = document.getElementById('selectedSubjectsCount');
+
+        courseSelect?.addEventListener('change', function() {
+            const course = this.value;
+            if (!course) {
+                subjectPickerSection.style.display = 'none';
+                subjectGroupsContainer.innerHTML = '';
+                return;
+            }
+
+            renderSubjectSelectionGrid(course);
+            subjectPickerSection.style.display = 'block';
+        });
+
+        function renderSubjectSelectionGrid(course) {
+            const catalog = SBSE_FULL_SUBJECT_CATALOG[course] || SBSE_FULL_SUBJECT_CATALOG.MATRICULATION;
+            subjectGroupsContainer.innerHTML = '';
+
+            catalog.groups.forEach((group, gIdx) => {
+                const groupBox = document.createElement('div');
+                groupBox.className = 'subject-group-box';
+                groupBox.innerHTML = `
+                    <h5>${group.name}</h5>
+                    <div class="subject-checkbox-grid">
+                        ${group.subjects.map(s => `
+                            <label class="subject-checkbox-label ${s.isDefault ? 'checked' : ''}" id="lbl_sub_${s.code}">
+                                <input type="checkbox" class="subject-checkbox" value="${s.code}" data-code="${s.code}" data-name="${s.name}" data-max="${s.maxMarks}" ${s.isDefault ? 'checked' : ''} onchange="updateSelectedSubjectsCount()">
+                                <span><strong>${s.code}</strong> - ${s.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                subjectGroupsContainer.appendChild(groupBox);
+            });
+
+            updateSelectedSubjectsCount();
+        }
+
+        window.updateSelectedSubjectsCount = function() {
+            const checkboxes = document.querySelectorAll('.subject-checkbox:checked');
+            const total = checkboxes.length;
+            if (selectedSubjectsCount) {
+                selectedSubjectsCount.textContent = `${total} Subjects Selected`;
+            }
+
+            document.querySelectorAll('.subject-checkbox').forEach(cb => {
+                const lbl = document.getElementById('lbl_sub_' + cb.value);
+                if (lbl) {
+                    if (cb.checked) lbl.classList.add('checked');
+                    else lbl.classList.remove('checked');
+                }
+            });
+        };
+
+        // Pre-select Default 5 Core Subjects
+        document.getElementById('btnSelectCoreDefaults')?.addEventListener('click', function() {
+            const course = courseSelect.value;
+            if (!course) return;
+            const defaults = SBSEData.getDefaultSubjects(course).map(s => s.code);
+            document.querySelectorAll('.subject-checkbox').forEach(cb => {
+                cb.checked = defaults.includes(cb.value);
+            });
+            updateSelectedSubjectsCount();
+        });
+
+        // Clear Selection
+        document.getElementById('btnClearSubjects')?.addEventListener('click', function() {
+            document.querySelectorAll('.subject-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateSelectedSubjectsCount();
+        });
+
+        // ================= DASHBOARD & STUDENTS DIRECTORY =================
+        function renderDashboard() {
+            const students = SBSEData.getStudents();
+
+            const total = students.length;
+            const matricCount = students.filter(s => s.course === 'MATRICULATION').length;
+            const interCount = students.filter(s => s.course === 'INTERMEDIATE').length;
+            const resultsDeclaredCount = students.filter(s => s.results && s.results.length > 0 && s.status !== 'PENDING').length;
+
+            document.getElementById('statTotalStudents').textContent = total;
+            document.getElementById('stat10thStudents').textContent = matricCount;
+            document.getElementById('stat12thStudents').textContent = interCount;
+            document.getElementById('statResultsDeclared').textContent = resultsDeclaredCount;
+
+            renderStudentsTable();
+        }
+
+        function renderStudentsTable() {
+            const students = SBSEData.getStudents();
+            const searchTerm = (document.getElementById('studentSearchInput')?.value || '').trim().toUpperCase();
+            const courseFilter = document.getElementById('courseFilter')?.value || '';
+            const sessionFilter = document.getElementById('sessionFilter')?.value || '';
+
+            const filtered = students.filter(s => {
+                const matchCourse = !courseFilter || s.course === courseFilter;
+                const matchSession = !sessionFilter || s.session === sessionFilter;
+                const matchSearch = !searchTerm || 
+                    (s.name && s.name.toUpperCase().includes(searchTerm)) ||
+                    (s.rollNumber && s.rollNumber.toUpperCase().includes(searchTerm)) ||
+                    (s.fatherName && s.fatherName.toUpperCase().includes(searchTerm)) ||
+                    (s.session && s.session.toUpperCase().includes(searchTerm)) ||
+                    (s.registrationNumber && s.registrationNumber.toUpperCase().includes(searchTerm));
+
+                return matchCourse && matchSession && matchSearch;
+            });
+
+            const tbody = document.getElementById('studentsTableBody');
+            document.getElementById('filteredCountBadge').textContent = `Showing ${filtered.length} of ${students.length} students`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-gray);">
+                            <i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                            No matching student records found. Add a new student using the "Enroll Student" tab.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((s, idx) => {
+                let statusBadge = '<span class="badge-status badge-pending">PENDING</span>';
+                if (s.status === 'PASS') {
+                    statusBadge = `<span class="badge-status badge-pass">PASS (${s.percentage}%)</span>`;
+                } else if (s.status === 'FAIL') {
+                    statusBadge = `<span class="badge-status badge-fail">FAIL (${s.percentage}%)</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td><strong>${idx + 1}</strong></td>
+                        <td><span style="font-weight: 700; color: #1a365d;">${s.rollNumber}</span></td>
+                        <td><strong style="color: #2b6cb0;">${s.name}</strong></td>
+                        <td>${s.fatherName || '---'}</td>
+                        <td>${s.motherName || '---'}</td>
+                        <td><span style="font-weight: 600;">${formatToDDMMYYYY(s.dob)}</span></td>
+                        <td><span style="background: #edf2f7; padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">${s.session || '2025-2026'}</span></td>
+                        <td><span style="font-size: 0.85rem; font-weight: 600;">${s.course === 'MATRICULATION' ? '10th (MATRIC)' : '12th (INTER)'}</span></td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${s.address || ''}">${s.address || '---'}</td>
+                        <td>${statusBadge}</td>
+                        <td style="text-align: center;">
+                            <div class="action-btns-group">
+                                <button class="btn btn-sm" style="background: #2b6cb0; color: white; padding: 5px 10px; font-size: 0.82rem;" title="Enter / Edit Marks" onclick="quickEditMarks('${s.id}')">
+                                    <i class="fas fa-marker"></i> Marks
+                                </button>
+                                <button class="btn btn-sm" style="background: #319795; color: white; padding: 5px 10px; font-size: 0.82rem;" title="View Marksheet" onclick="openMarksheet('${s.id}')">
+                                    <i class="fas fa-file-alt"></i>
+                                </button>
+                                <button class="btn btn-sm" style="background: #e53e3e; color: white; padding: 5px 8px; font-size: 0.82rem;" title="Delete Student" onclick="deleteStudentRecord('${s.id}', '${s.name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('studentSearchInput').value = '';
+            document.getElementById('courseFilter').value = '';
+            document.getElementById('sessionFilter').value = '';
+            renderStudentsTable();
+        }
+
+        document.getElementById('studentSearchInput')?.addEventListener('input', renderStudentsTable);
+        document.getElementById('courseFilter')?.addEventListener('change', renderStudentsTable);
+        document.getElementById('sessionFilter')?.addEventListener('change', renderStudentsTable);
+
+        // Delete Student
+        window.deleteStudentRecord = function(id, name) {
+            if (confirm(`Are you sure you want to permanently delete student "${name}"?`)) {
+                SBSEData.deleteStudent(id);
+                showToastNotification(`Student record for "${name}" was deleted.`, 'success');
+                renderDashboard();
+                populateStudentSelectDropdown();
+            }
+        };
+
+        // ================= ENROLL NEW STUDENT SUBMISSION (UPPERCASE & ENROLLED SUBJECTS) =================
+        function handleEnrollmentSubmit(e, autoFlow = false) {
+            if (e) e.preventDefault();
+
+            const name = document.getElementById('studentName').value.trim().toUpperCase();
+            const roll = document.getElementById('rollNumber').value.trim().toUpperCase();
+            const regNo = document.getElementById('registrationNumber').value.trim().toUpperCase();
+            const rawDob = document.getElementById('dob').value.trim();
+            const father = document.getElementById('fatherName').value.trim().toUpperCase();
+            const mother = document.getElementById('motherName').value.trim().toUpperCase();
+            const course = document.getElementById('courseSelect').value.toUpperCase();
+            const session = document.getElementById('sessionSelect').value.toUpperCase();
+            const year = document.getElementById('passingYear').value.trim();
+            const address = document.getElementById('address').value.trim().toUpperCase();
+
+            const dobFormatted = formatToDDMMYYYY(rawDob);
+
+            if (!name || !roll || !regNo || !dobFormatted || !father || !mother || !course || !session || !year || !address) {
+                showToastNotification('Please fill all required student information fields.', 'error');
+                return;
+            }
+
+            // Gather selected subjects
+            const selectedCheckboxes = document.querySelectorAll('.subject-checkbox:checked');
+            let enrolledSubjects = [];
+            selectedCheckboxes.forEach(cb => {
+                enrolledSubjects.push({
+                    code: cb.getAttribute('data-code'),
+                    name: cb.getAttribute('data-name'),
+                    maxMarks: parseFloat(cb.getAttribute('data-max')) || 100
+                });
+            });
+
+            if (enrolledSubjects.length === 0) {
+                // If none manually checked, grab course default subjects
+                enrolledSubjects = SBSEData.getDefaultSubjects(course);
+            }
+
+            // Check if roll number already exists for another student
+            const existingStudent = SBSEData.getStudentByRoll(roll);
+            if (existingStudent) {
+                showToastNotification(`Student with Roll Number "${roll}" already exists!`, 'error');
+                return;
+            }
+
+            const rawIssueDate = document.getElementById('marksheetIssueDate')?.value.trim();
+            const calculatedIssueDate = SBSEData.getMarksheetIssueDate({
+                issueDate: rawIssueDate,
+                rollNumber: roll,
+                session,
+                passingYear: year
+            });
+
+            const newStudent = {
+                id: 'STU_' + Date.now(),
+                name,
+                rollNumber: roll,
+                registrationNumber: regNo,
+                dob: dobFormatted,
+                fatherName: father,
+                motherName: mother,
+                course,
+                session,
+                passingYear: year,
+                issueDate: calculatedIssueDate,
+                address,
+                enrolledSubjects,
+                results: [],
+                totalMarks: 0,
+                maxTotal: 0,
+                percentage: 0,
+                grade: 'PENDING',
+                status: 'PENDING'
+            };
+
+            SBSEData.saveStudent(newStudent);
+            showToastNotification(`Student "${name}" enrolled successfully with ${enrolledSubjects.length} subjects!`, 'success');
+
+            // Reset form
+            document.getElementById('enrollStudentForm').reset();
+            document.getElementById('subjectPickerSection').style.display = 'none';
+            const issueInput = document.getElementById('marksheetIssueDate');
+            if (issueInput) delete issueInput.dataset.userEdited;
+            updateEnrollmentIssueDate();
+
+            renderDashboard();
+            populateStudentSelectDropdown();
+
+            if (autoFlow) {
+                // AUTO FLOW: Switch to marks tab, select this student, load subjects!
+                switchTab('marks-tab');
+                selectStudentForMarks(newStudent.id);
+                showToastNotification(`Auto-Flow: Loaded ${enrolledSubjects.length} subjects for ${name}. Enter marks below.`, 'success');
+            } else {
+                switchTab('dashboard-tab');
+            }
+        }
+
+        // Auto-compute August issue date according to session / final year
+        function updateEnrollmentIssueDate() {
+            const session = document.getElementById('sessionSelect')?.value || '2025-2026';
+            const year = document.getElementById('passingYear')?.value || '2026';
+            const issueInput = document.getElementById('marksheetIssueDate');
+            if (issueInput && !issueInput.dataset.userEdited) {
+                issueInput.value = SBSEData.getMarksheetIssueDate({ session, passingYear: year });
+            }
+        }
+
+        document.getElementById('marksheetIssueDate')?.addEventListener('input', function() {
+            this.dataset.userEdited = 'true';
+        });
+
+        document.getElementById('sessionSelect')?.addEventListener('change', function() {
+            const parts = this.value.split('-');
+            if (parts.length > 1 && document.getElementById('passingYear')) {
+                document.getElementById('passingYear').value = parts[1].trim();
+            }
+            const issueInput = document.getElementById('marksheetIssueDate');
+            if (issueInput) delete issueInput.dataset.userEdited;
+            updateEnrollmentIssueDate();
+        });
+
+        document.getElementById('passingYear')?.addEventListener('input', function() {
+            const issueInput = document.getElementById('marksheetIssueDate');
+            if (issueInput) delete issueInput.dataset.userEdited;
+            updateEnrollmentIssueDate();
+        });
+
+        // Initialize enrollment issue date
+        updateEnrollmentIssueDate();
+
+        document.getElementById('enrollStudentForm')?.addEventListener('submit', function(e) {
+            handleEnrollmentSubmit(e, false);
+        });
+
+        document.getElementById('btnSaveAndAutoFlow')?.addEventListener('click', function(e) {
+            handleEnrollmentSubmit(e, true);
+        });
+
+        // ================= TYPE-TO-SEARCH AUTOCOMPLETE & MARKS AUTO-FLOW =================
+        const studentSearchSelect = document.getElementById('studentSearchSelect');
+        const studentSearchResultsDropdown = document.getElementById('studentSearchResultsDropdown');
+        const studentSelect = document.getElementById('studentSelect');
+
+        function populateStudentSelectDropdown() {
+            const students = SBSEData.getStudents();
+            if (!studentSelect) return;
+
+            const currentVal = studentSelect.value;
+            studentSelect.innerHTML = '<option value="">-- Or choose from list --</option>';
+
+            students.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `${s.name} (${s.rollNumber}) - ${s.course} [${s.session}]`;
+                studentSelect.appendChild(opt);
+            });
+
+            if (currentVal && students.some(s => String(s.id) === String(currentVal))) {
+                studentSelect.value = currentVal;
+            }
+        }
+
+        // Live Type-to-Search Input Handling
+        studentSearchSelect?.addEventListener('input', function() {
+            const q = this.value.trim().toUpperCase();
+            if (!q) {
+                studentSearchResultsDropdown.style.display = 'none';
+                return;
+            }
+
+            const students = SBSEData.getStudents();
+            const matches = students.filter(s => 
+                (s.name && s.name.toUpperCase().includes(q)) ||
+                (s.rollNumber && s.rollNumber.toUpperCase().includes(q)) ||
+                (s.fatherName && s.fatherName.toUpperCase().includes(q))
+            );
+
+            if (matches.length === 0) {
+                studentSearchResultsDropdown.innerHTML = `
+                    <div style="padding: 12px; text-align: center; color: var(--text-gray); font-size: 0.9rem;">
+                        No student matching "<strong>${q}</strong>" found.
+                    </div>
+                `;
+                studentSearchResultsDropdown.style.display = 'block';
+                return;
+            }
+
+            studentSearchResultsDropdown.innerHTML = matches.slice(0, 10).map(s => `
+                <div class="search-result-item" onclick="selectStudentForMarks('${s.id}')">
+                    <div>
+                        <strong>${s.name}</strong> 
+                        <span style="color: var(--text-gray); font-size: 0.85rem;">(Roll: ${s.rollNumber})</span>
+                    </div>
+                    <div>
+                        <span class="meta">${s.course === 'MATRICULATION' ? '10th' : '12th'}</span>
+                        <span class="meta">${s.session || '2025-26'}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            studentSearchResultsDropdown.style.display = 'block';
+        });
+
+        // Hide search dropdown on click outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-select-wrapper')) {
+                studentSearchResultsDropdown.style.display = 'none';
+            }
+        });
+
+        // Secondary dropdown selection
+        studentSelect?.addEventListener('change', function() {
+            if (this.value) {
+                selectStudentForMarks(this.value);
+            } else {
+                clearStudentSelection();
+            }
+        });
+
+        window.selectStudentForMarks = function(studentId) {
+            const student = SBSEData.getStudentById(studentId);
+            if (!student) return;
+
+            studentSelect.value = student.id;
+            studentSearchSelect.value = `${student.name} (ROLL: ${student.rollNumber})`;
+            studentSearchResultsDropdown.style.display = 'none';
+
+            loadStudentDetailsAndSubjects(student);
+        };
+
+        function clearStudentSelection() {
+            document.getElementById('selectedStudentPill').style.display = 'none';
+            document.getElementById('marksSummaryCard').style.display = 'none';
+            document.getElementById('marksFormActionBtns').style.display = 'none';
+            document.getElementById('enrolledSubjectsBadge').style.display = 'none';
+            document.getElementById('subjectInputsContainer').innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-light);">
+                    <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p>No student selected. Select a student to enter their marks.</p>
+                </div>
+            `;
+        }
+
+        function loadStudentDetailsAndSubjects(student) {
+            const pill = document.getElementById('selectedStudentPill');
+            const summaryCard = document.getElementById('marksSummaryCard');
+            const container = document.getElementById('subjectInputsContainer');
+            const actionBtns = document.getElementById('marksFormActionBtns');
+            const subjectsBadge = document.getElementById('enrolledSubjectsBadge');
+
+            // Fill student info pill (all uppercase & DD/MM/YYYY)
+            document.getElementById('pillStudentName').textContent = student.name;
+            document.getElementById('pillRoll').textContent = student.rollNumber;
+            document.getElementById('pillCourse').textContent = student.course;
+            document.getElementById('pillReg').textContent = student.registrationNumber || '---';
+            document.getElementById('pillSession').textContent = student.session || '---';
+            document.getElementById('pillFather').textContent = student.fatherName || '---';
+            document.getElementById('pillMother').textContent = student.motherName || '---';
+            document.getElementById('pillDob').textContent = formatToDDMMYYYY(student.dob) || '---';
+            document.getElementById('pillAddress').textContent = student.address || '---';
+
+            pill.style.display = 'block';
+            summaryCard.style.display = 'block';
+            actionBtns.style.display = 'block';
+
+            // Get exact enrolled subjects for this student (from NIOS reference)
+            const subjects = SBSEData.getSubjectsForStudent(student);
+            subjectsBadge.textContent = `${subjects.length} REGISTERED SUBJECTS`;
+            subjectsBadge.style.display = 'inline-block';
+
+            const existingResultsMap = {};
+            if (student.results && Array.isArray(student.results)) {
+                student.results.forEach(r => {
+                    existingResultsMap[r.subjectCode] = {
+                        theory: r.theory !== undefined ? r.theory : r.marks,
+                        practical: r.practical !== undefined ? r.practical : 'XX',
+                        marks: r.marks || r.total || 0
+                    };
+                });
+            }
+
+            let html = `
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="subject-entry-table" style="width: 100%; min-width: 580px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 65px;">Code</th>
+                                <th>Subject Name</th>
+                                <th style="width: 70px; text-align: center;">Max</th>
+                                <th style="width: 125px; text-align: center;">Theory</th>
+                                <th style="width: 125px; text-align: center;">Practical</th>
+                                <th style="width: 85px; text-align: center;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            subjects.forEach(sub => {
+                const prev = existingResultsMap[sub.code];
+                const isPractical = SBSEData.isPracticalSubject(sub.name, sub.code);
+                const prevTheory = prev ? (prev.theory !== undefined ? prev.theory : '') : '';
+                const prevPractical = prev ? (prev.practical !== undefined ? prev.practical : (isPractical ? '' : 'XX')) : (isPractical ? '' : 'XX');
+                const prevTotal = prev ? (prev.marks || 0) : 0;
+
+                html += `
+                    <tr class="subject-mark-row" data-code="${sub.code}" data-name="${sub.name}" data-max="${sub.maxMarks || 100}" data-is-practical="${isPractical}">
+                        <td><strong>${sub.code}</strong></td>
+                        <td>
+                            <strong>${sub.name}</strong>
+                            ${isPractical ? '<br><small style="color: #2b6cb0; font-weight: 600; font-size: 0.75rem;"><i class="fas fa-flask me-1"></i>Practical Subject</small>' : ''}
+                        </td>
+                        <td style="text-align: center; font-weight: 600;">${sub.maxMarks || 100}</td>
+                        <td style="text-align: center;">
+                            <input type="number" 
+                                class="theory-input marks-input" 
+                                min="0" 
+                                max="${sub.maxMarks || 100}" 
+                                value="${prevTheory}" 
+                                placeholder="0-100" 
+                                required 
+                                oninput="calculateLiveMarks()">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="text" 
+                                class="practical-input marks-input ${isPractical ? '' : 'non-practical'}" 
+                                value="${prevPractical}" 
+                                placeholder="${isPractical ? '0-20' : 'XX'}" 
+                                oninput="calculateLiveMarks()">
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="subject-row-total">${prevTotal}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+
+            calculateLiveMarks();
+        }
+
+        // Live calculate marks as admin types
+        window.calculateLiveMarks = function() {
+            const rows = document.querySelectorAll('.subject-mark-row');
+            if (rows.length === 0) return;
+
+            const tempResults = [];
+            rows.forEach(row => {
+                const code = row.getAttribute('data-code');
+                const name = row.getAttribute('data-name');
+                const max = parseFloat(row.getAttribute('data-max')) || 100;
+                const isPractical = row.getAttribute('data-is-practical') === 'true';
+
+                const thInp = row.querySelector('.theory-input');
+                const prInp = row.querySelector('.practical-input');
+                const totalSpan = row.querySelector('.subject-row-total');
+
+                const thVal = thInp.value !== '' ? parseFloat(thInp.value) : 0;
+                const prRaw = (prInp.value || '').trim().toUpperCase();
+                let prVal = 0;
+                if (prRaw && prRaw !== 'XX' && prRaw !== '-' && !isNaN(parseFloat(prRaw))) {
+                    prVal = parseFloat(prRaw);
+                }
+
+                const subTotal = Math.round(thVal + prVal);
+                if (totalSpan) {
+                    totalSpan.textContent = subTotal;
+                }
+
+                tempResults.push({
+                    subjectCode: code,
+                    subjectName: name,
+                    maxMarks: max,
+                    theory: thInp.value !== '' ? thVal : 0,
+                    practical: prRaw || (isPractical ? 0 : 'XX'),
+                    marks: subTotal,
+                    total: subTotal
+                });
+            });
+
+            const res = SBSEData.calculateResult(tempResults);
+
+            document.getElementById('calcTotalMarks').textContent = res.totalMarks;
+            document.getElementById('calcMaxTotal').textContent = res.maxTotal;
+            document.getElementById('calcPercentage').textContent = res.percentage + '%';
+            document.getElementById('calcGrade').textContent = res.grade;
+
+            const statusEl = document.getElementById('calcStatus');
+            statusEl.textContent = res.status;
+            statusEl.className = 'status-badge-lg ' + (res.status === 'PASS' ? 'badge-pass' : 'badge-fail');
+        };
+
+        // Save Marks Submission
+        document.getElementById('marksEntryForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('studentSelect').value;
+            if (!studentId) {
+                showToastNotification('Please select a student first.', 'error');
+                return;
+            }
+
+            const rows = document.querySelectorAll('.subject-mark-row');
+            const marksList = [];
+            let isValid = true;
+
+            rows.forEach(row => {
+                const code = row.getAttribute('data-code');
+                const name = row.getAttribute('data-name');
+                const max = parseFloat(row.getAttribute('data-max')) || 100;
+                const isPractical = row.getAttribute('data-is-practical') === 'true';
+
+                const thInp = row.querySelector('.theory-input');
+                const prInp = row.querySelector('.practical-input');
+
+                const thVal = parseFloat(thInp.value);
+                if (isNaN(thVal) || thVal < 0 || thVal > max) {
+                    isValid = false;
+                }
+
+                const prRaw = (prInp.value || '').trim().toUpperCase();
+                let prVal = 0;
+                let finalPr = 'XX';
+                if (prRaw && prRaw !== 'XX' && prRaw !== '-') {
+                    const parsedPr = parseFloat(prRaw);
+                    if (isNaN(parsedPr) || parsedPr < 0 || parsedPr > max) {
+                        isValid = false;
+                    } else {
+                        prVal = parsedPr;
+                        finalPr = parsedPr;
+                    }
+                } else if (isPractical && prRaw === '') {
+                    finalPr = 0;
+                }
+
+                const subTotal = (isNaN(thVal) ? 0 : thVal) + prVal;
+                marksList.push({
+                    subjectCode: code,
+                    subjectName: name,
+                    maxMarks: max,
+                    theory: isNaN(thVal) ? 0 : thVal,
+                    practical: finalPr,
+                    marks: subTotal,
+                    total: subTotal
+                });
+            });
+
+            if (!isValid) {
+                showToastNotification('Please enter valid Theory and Practical marks for all subjects.', 'error');
+                return;
+            }
+
+            const updated = SBSEData.saveResults(studentId, marksList);
+            if (updated) {
+                showToastNotification(`Results saved for ${updated.name}! Status: ${updated.status} (${updated.percentage}%)`, 'success');
+                renderDashboard();
+            }
+        });
+
+        // Quick edit marks directly from table action
+        window.quickEditMarks = function(studentId) {
+            switchTab('marks-tab');
+            selectStudentForMarks(studentId);
+        };
+
+        // ================= MARKSHEET MODAL & PREVIEW (DD/MM/YYYY & UPPERCASE) =================
+        window.openMarksheet = function(studentId) {
+            const student = SBSEData.getStudentById(studentId);
+            if (!student) {
+                showToastNotification('Student record not found.', 'error');
+                return;
+            }
+
+            currentViewingStudent = student;
+
+            if (!student.results || student.results.length === 0) {
+                if (confirm(`No examination marks entered yet for ${student.name}. Would you like to enter marks now?`)) {
+                    quickEditMarks(studentId);
+                }
+                return;
+            }
+
+            // Fill Marksheet Data
+            document.getElementById('marksheetTitleCourse').textContent = 
+                `STATEMENT OF MARKS - ${student.course} EXAMINATION ${student.passingYear || '2026'}`;
+
+            document.getElementById('msStudentName').textContent = student.name;
+            document.getElementById('msRollNumber').textContent = student.rollNumber;
+            document.getElementById('msFatherName').textContent = student.fatherName || '---';
+            document.getElementById('msMotherName').textContent = student.motherName || '---';
+            document.getElementById('msRegNumber').textContent = student.registrationNumber || '---';
+            document.getElementById('msDob').textContent = formatToDDMMYYYY(student.dob) || '---';
+            document.getElementById('msSession').textContent = student.session || '2025-2026';
+            document.getElementById('msYear').textContent = student.passingYear || '2026';
+            document.getElementById('msAddress').textContent = student.address || '---';
+
+            // Fill marks table with Theory and Practical columns
+            const tbody = document.getElementById('msMarksTableBody');
+            let totalTh = 0;
+            let totalPr = 0;
+            let hasAnyPrNumber = false;
+
+            tbody.innerHTML = student.results.map(r => {
+                const max = r.maxMarks || 100;
+                const th = (r.theory !== undefined && r.theory !== null && r.theory !== '') ? parseFloat(r.theory) : (parseFloat(r.marks) || 0);
+                totalTh += th;
+
+                let prDisplay = 'XX';
+                const prRaw = (r.practical !== undefined && r.practical !== null) ? String(r.practical).trim().toUpperCase() : '';
+                if (prRaw && prRaw !== 'XX' && prRaw !== '-' && !isNaN(parseFloat(prRaw))) {
+                    const prNum = parseFloat(prRaw);
+                    prDisplay = prNum;
+                    totalPr += prNum;
+                    hasAnyPrNumber = true;
+                } else if (SBSEData.isPracticalSubject(r.subjectName, r.subjectCode)) {
+                    prDisplay = '0';
+                }
+
+                const totalSub = th + (prDisplay === 'XX' ? 0 : parseFloat(prDisplay));
+                const subPct = (max > 0) ? ((totalSub / max) * 100).toFixed(1) : 0;
+                const isPass = totalSub >= (max * 0.33);
+
+                return `
+                    <tr>
+                        <td><strong>${r.subjectCode}</strong></td>
+                        <td class="subject-col">${r.subjectName}</td>
+                        <td>${max}</td>
+                        <td><strong>${th}</strong></td>
+                        <td>${prDisplay === 'XX' ? '<span style="color: #a0aec0; font-weight: 600;">XX</span>' : '<strong>' + prDisplay + '</strong>'}</td>
+                        <td><strong style="color: #2b6cb0;">${totalSub}</strong></td>
+                        <td>${subPct}%</td>
+                        <td style="color: ${isPass ? '#28a745' : '#dc3545'}; font-weight: 600;">${isPass ? 'PASSED' : 'FAILED'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('msMaxTotal').textContent = student.maxTotal;
+            document.getElementById('msTheoryTotal').textContent = totalTh;
+            document.getElementById('msPracticalTotal').textContent = hasAnyPrNumber ? totalPr : 'XX';
+            document.getElementById('msTotalObtained').textContent = student.totalMarks;
+            document.getElementById('msOverallPercentage').textContent = student.percentage + '%';
+            document.getElementById('msOverallGrade').textContent = student.grade;
+
+            const finalBadge = document.getElementById('msFinalStatusBadge');
+            finalBadge.textContent = student.status;
+            finalBadge.style.background = student.status === 'PASS' ? '#c6f6d5' : '#fed7d7';
+            finalBadge.style.color = student.status === 'PASS' ? '#22543d' : '#9b2c2c';
+
+            document.getElementById('msGradePill').textContent = student.grade;
+            
+            // Set Date of Issue (August of final year, non-Sunday)
+            const issueDate = SBSEData.getMarksheetIssueDate(student);
+            const msIssueEl = document.getElementById('msIssueDate') || document.getElementById('msDeclarationDate');
+            if (msIssueEl) msIssueEl.textContent = issueDate;
+            const msIssueFooter = document.getElementById('msIssueDateFooter');
+            if (msIssueFooter) msIssueFooter.textContent = issueDate;
+
+            // Open modal first so layout has dimensions
+            document.getElementById('marksheetModal').style.display = 'block';
+
+            // Generate Student Details QR Code using crisp vector SVG
+            renderStudentQrCode('msQrCode', student);
+        };
+
+        window.closeMarksheetModal = function() {
+            document.getElementById('marksheetModal').style.display = 'none';
+        };
+
+        // Print marksheet with student's name as the document/file title
+        window.printCurrentMarksheet = function() {
+            if (!currentViewingStudent) {
+                window.print();
+                return;
+            }
+            const cleanName = (currentViewingStudent.name || 'STUDENT').trim().toUpperCase();
+            const originalTitle = document.title;
+            const printTitle = `${cleanName} - Official Marksheet - SBSE`;
+
+            document.title = printTitle;
+
+            const restoreTitle = () => {
+                document.title = originalTitle;
+                window.removeEventListener('afterprint', restoreTitle);
+            };
+            window.addEventListener('afterprint', restoreTitle);
+
+            window.print();
+
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 2000);
+        };
+
+        // Preview button from marks tab
+        document.getElementById('btnPreviewMarksheet')?.addEventListener('click', function() {
+            const studentId = document.getElementById('studentSelect').value;
+            if (studentId) {
+                openMarksheet(studentId);
+            }
+        });
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMarksheetModal();
+        });
+
+        // Toast Notification System
+        function showToastNotification(message, type = 'success') {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 8px; color: white; font-weight: 500; z-index: 100000; max-width: 440px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}" style="font-size: 1.25rem;"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            notification.style.cssText = `
+                position: fixed;
+                top: 25px;
+                right: 25px;
+                z-index: 100000;
+                background: ${type === 'success' ? 'linear-gradient(135deg, #2f855a, #48bb78)' : 'linear-gradient(135deg, #c53030, #e53e3e)'};
+                border-radius: 8px;
+            `;
+            
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderDashboard();
+            populateStudentSelectDropdown();
+        });
+    </script>
+</body>
+</html>
