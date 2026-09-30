@@ -342,11 +342,40 @@ nav a.active {
     color: var(--text-dark);
     margin-bottom: 10px;
     font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+.news-content h3 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.news-content h3 a:hover {
+    color: var(--primary);
 }
 
 .news-content p {
     color: var(--text-gray);
     font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.news-read-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.news-read-more:hover {
+    color: var(--accent);
+    transform: translateX(4px);
 }
 
 /* About Page */
