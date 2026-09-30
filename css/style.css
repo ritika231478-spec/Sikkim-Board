@@ -151,14 +151,223 @@ nav a.active {
     transition: var(--transition);
 }
 
-/* Hero Section */
+/* ==========================================================================
+   Banner Slider Section (Sliding Banners)
+   ========================================================================== */
+.banner-slider-section {
+    position: relative;
+    width: 100%;
+    background: #0b1a2d;
+    overflow: hidden;
+    line-height: 0;
+}
+
+.banner-slider {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+.banner-track {
+    display: flex;
+    width: 100%;
+    transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+.banner-slide {
+    min-width: 100%;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.banner-slide img {
+    width: 100%;
+    height: auto;
+    display: block;
+    aspect-ratio: 1920 / 530;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Slider Controls */
+.slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(14, 133, 129, 0.75);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    font-size: 1.1rem;
+}
+
+.slider-prev {
+    left: 20px;
+}
+
+.slider-next {
+    right: 20px;
+}
+
+.slider-arrow:hover {
+    background: #108581;
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border-color: #ffffff;
+}
+
+.slider-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.slider-dots {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.slider-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.slider-dot.active {
+    width: 32px;
+    background: #ffffff;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+.slider-dot:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+/* ==========================================================================
+   Dignitaries Leadership Section (Matching Screenshot)
+   ========================================================================== */
+.dignitaries-section {
+    background-color: #108581;
+    background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 0),
+        linear-gradient(135deg, #0d7874 0%, #108581 50%, #0d7874 100%);
+    background-size: 8px 8px, 100% 100%;
+    color: #ffffff;
+    padding: 16px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1), 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.dignitaries-grid {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+.dignitary-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 6px 14px;
+    border-radius: 40px;
+    transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.dignitary-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateY(-2px);
+}
+
+.dignitary-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dignitary-avatar {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 3.5px solid #ffffff;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #ffffff;
+}
+
+.dignitary-card:hover .dignitary-avatar {
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.dignitary-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.dignitary-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin: 0 0 3px 0;
+    line-height: 1.25;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dignitary-title {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #e0f4f3;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: 0.2px;
+}
+
+/* ==========================================================================
+/* ==========================================================================
+   Hero / Welcome Section
+   ========================================================================== */
 .hero {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    color: white;
-    padding: 80px 0;
+    background: linear-gradient(135deg, #0e2238 0%, #1a365d 50%, #2b507e 100%);
+    color: #ffffff;
+    padding: 70px 0;
     text-align: center;
     position: relative;
     overflow: hidden;
+    border-bottom: 3px solid var(--accent);
 }
 
 .hero::before {
@@ -168,30 +377,42 @@ nav a.active {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>') repeat;
-    background-size: 100px;
-    opacity: 0.3;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2"/></svg>') repeat;
+    background-size: 80px;
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 .hero-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .hero h1 {
-    font-size: 2.8rem;
-    margin-bottom: 15px;
+    font-size: 2.7rem;
+    margin-bottom: 18px;
     font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    color: #ffffff;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+    line-height: 1.25;
 }
 
-.hero p {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    opacity: 0.95;
-    max-width: 700px;
+/* Tagline: Bold Radiant Yellow with 100% High Visibility & Contrast */
+.hero p,
+.hero-tagline {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #fed766; /* Vibrant golden-yellow for maximum readability */
+    margin-bottom: 32px;
+    max-width: 820px;
     margin-left: auto;
     margin-right: auto;
+    line-height: 1.7;
+    opacity: 1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.3px;
 }
 
 .btn {
@@ -1128,13 +1349,18 @@ footer {
     animation: fadeInUp 1s ease-out 0.2s both;
 }
 
-.hero p {
+.hero p,
+.hero .hero-tagline {
     font-size: 1.3rem;
+    font-weight: 500;
+    color: #fed766 !important;
     margin-bottom: 35px;
-    opacity: 0.95;
-    max-width: 750px;
+    opacity: 1 !important;
+    max-width: 820px;
     margin-left: auto;
     margin-right: auto;
+    line-height: 1.7;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
     animation: fadeInUp 1s ease-out 0.4s both;
 }
 
@@ -3169,4 +3395,22 @@ footer::before {
     .search-box {
         min-width: 100%;
     }
+
+    /* Mobile Dignitaries & Slider */
+    .banner-slide img {
+        min-height: 140px;
+    }
+
+    .dignitaries-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .dignitary-card {
+        width: 100%;
+        max-width: 320px;
+        justify-content: flex-start;
+    }
 }
+

@@ -435,4 +435,173 @@ document.addEventListener('DOMContentLoaded', function() {
             this.style.textShadow = 'none';
         });
     });
+
+    // ==========================================================================
+    // Hero Banner Slider (Continuous Automatic Sliding & Infinite Carousel)
+    // ==========================================================================
+    function initBannerSlider() {
+        const slider = document.getElementById('bannerSlider');
+        const track = document.getElementById('bannerTrack');
+        const prevBtn = document.getElementById('sliderPrev');
+        const nextBtn = document.getElementById('sliderNext');
+        const dots = document.querySelectorAll('.slider-dot');
+        
+        if (!slider || !track) return;
+        
+        const originalSlides = Array.from(track.querySelectorAll('.banner-slide'));
+        const totalOriginal = originalSlides.length;
+        if (totalOriginal === 0) return;
+        
+        // Clone first and last slides for seamless infinite loop
+        const firstClone = originalSlides[0].cloneNode(true);
+        const lastClone = originalSlides[totalOriginal - 1].cloneNode(true);
+        firstClone.classList.add('clone');
+        lastClone.classList.add('clone');
+        
+        track.appendChild(firstClone);
+        track.insertBefore(lastClone, originalSlides[0]);
+        
+        let currentIndex = 1; // Start at first real slide (index 1)
+        let isTransitioning = false;
+        let autoSlideTimer = null;
+        const slideInterval = 3500; // Auto-slides every 3.5 seconds
+        const transitionDuration = '0.8s cubic-bezier(0.25, 1, 0.5, 1)';
+        
+        // Initial setup without animation
+        track.style.transition = 'none';
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        updateDots(0);
+        
+        function updateDots(activeOriginalIndex) {
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === activeOriginalIndex);
+            });
+        }
+        
+        function getOriginalIndex() {
+            if (currentIndex === 0) return totalOriginal - 1;
+            if (currentIndex === totalOriginal + 1) return 0;
+            return currentIndex - 1;
+        }
+        
+        function moveToSlide(index) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            currentIndex = index;
+            track.style.transition = `transform ${transitionDuration}`;
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            updateDots(getOriginalIndex());
+        }
+        
+        function slideNext() {
+            moveToSlide(currentIndex + 1);
+        }
+        
+        function slidePrev() {
+            moveToSlide(currentIndex - 1);
+        }
+        
+        // Handle infinite wrap-around on transition end
+        track.addEventListener('transitionend', () => {
+            isTransitioning = false;
+            if (currentIndex >= totalOriginal + 1) {
+                // Reached end clone -> jump seamlessly to first real slide
+                track.style.transition = 'none';
+                currentIndex = 1;
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            } else if (currentIndex <= 0) {
+                // Reached start clone -> jump seamlessly to last real slide
+                track.style.transition = 'none';
+                currentIndex = totalOriginal;
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            }
+            updateDots(getOriginalIndex());
+        });
+        
+        function startAutoSlide() {
+            stopAutoSlide();
+            autoSlideTimer = setInterval(slideNext, slideInterval);
+        }
+        
+        function stopAutoSlide() {
+            if (autoSlideTimer) {
+                clearInterval(autoSlideTimer);
+                autoSlideTimer = null;
+            }
+        }
+        
+        // Arrow Buttons
+        if (nextBtn) {
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                slideNext();
+                startAutoSlide();
+            });
+        }
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                slidePrev();
+                startAutoSlide();
+            });
+        }
+        
+        // Dots
+        dots.forEach((dot) => {
+            dot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetIndex = parseInt(dot.getAttribute('data-slide'), 10) + 1;
+                moveToSlide(targetIndex);
+                startAutoSlide();
+            });
+        });
+        
+        // Tab Visibility handling: resume when returning to tab
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopAutoSlide();
+            } else {
+                startAutoSlide();
+            }
+        });
+        
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        slider.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        slider.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchEndX - touchStartX;
+            if (Math.abs(diff) > 40) {
+                if (diff < 0) {
+                    slideNext();
+                } else {
+                    slidePrev();
+                }
+                startAutoSlide();
+            }
+        }, { passive: true });
+        
+        // Keyboard arrow support
+        slider.setAttribute('tabindex', '0');
+        slider.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                slidePrev();
+                startAutoSlide();
+            } else if (e.key === 'ArrowRight') {
+                slideNext();
+                startAutoSlide();
+            }
+        });
+        
+        // Start automatic sliding immediately
+        startAutoSlide();
+    }
+    
+    initBannerSlider();
 });

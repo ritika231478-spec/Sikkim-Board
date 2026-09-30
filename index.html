@@ -68,14 +68,87 @@
         </div>
     </header>
 
-    <section class="hero">
+    <!-- Hero Banner Slider (Three Banners Sliding Horizontally) -->
+    <section class="banner-slider-section" aria-label="Featured Banners">
+        <div class="banner-slider" id="bannerSlider">
+            <div class="banner-track" id="bannerTrack">
+                <div class="banner-slide active" data-index="0">
+                    <img src="Banner_20260922_27.jpg" alt="Chief Minister and Chief Justice Jointly Inaugurates Additional Court of District & Session Judge at Namchi">
+                </div>
+                <div class="banner-slide" data-index="1">
+                    <img src="Banner_20260919_33.jpg" alt="First Batch of MBBS Students of Helen Lepcha Sikkim Government Medical College Receive White Coats">
+                </div>
+                <div class="banner-slide" data-index="2">
+                    <img src="Banner_20260928_17.jpg" alt="Chief Minister Prem Singh Tamang Attends UDAAN Festival at ATTC, Bardang">
+                </div>
+            </div>
+
+            <!-- Slider Navigation Arrows -->
+            <button class="slider-arrow slider-prev" id="sliderPrev" aria-label="Previous Slide">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="slider-arrow slider-next" id="sliderNext" aria-label="Next Slide">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <!-- Slide Dots -->
+            <div class="slider-dots" id="sliderDots">
+                <button class="slider-dot active" data-slide="0" aria-label="Slide 1"></button>
+                <button class="slider-dot" data-slide="1" aria-label="Slide 2"></button>
+                <button class="slider-dot" data-slide="2" aria-label="Slide 3"></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dignitaries Section (Governor, Chief Minister, Chief Secretary) -->
+    <section class="dignitaries-section" aria-label="Government Leadership">
+        <div class="container">
+            <div class="dignitaries-grid">
+                <!-- Governor -->
+                <div class="dignitary-card">
+                    <div class="dignitary-avatar-wrap">
+                        <img src="governor.jpg" alt="Shri Om Prakash Mathur" class="dignitary-avatar">
+                    </div>
+                    <div class="dignitary-info">
+                        <h4 class="dignitary-name">SHRI OM PRAKASH MATHUR</h4>
+                        <p class="dignitary-title">Hon'ble Governor</p>
+                    </div>
+                </div>
+
+                <!-- Chief Minister -->
+                <div class="dignitary-card">
+                    <div class="dignitary-avatar-wrap">
+                        <img src="hcm.jpg" alt="Shri Prem Singh Tamang" class="dignitary-avatar">
+                    </div>
+                    <div class="dignitary-info">
+                        <h4 class="dignitary-name">SHRI PREM SINGH TAMANG</h4>
+                        <p class="dignitary-title">Hon'ble Chief Minister</p>
+                    </div>
+                </div>
+
+                <!-- Chief Secretary -->
+                <div class="dignitary-card">
+                    <div class="dignitary-avatar-wrap">
+                        <img src="Secretary.jpg" alt="Shri Ravindra Telang" class="dignitary-avatar">
+                    </div>
+                    <div class="dignitary-info">
+                        <h4 class="dignitary-name">SHRI RAVINDRA TELANG</h4>
+                        <p class="dignitary-title">Chief Secretary</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Welcome Section -->
+    <section class="hero" id="welcomeSection">
         <div class="container">
             <div class="hero-content">
                 <h1>Welcome to Sikkim Board of School Education</h1>
-                <p>Prescribing curriculum, textbooks and instructional materials for schools and conducting examinations at the school level in the State of Sikkim</p>
+                <p class="hero-tagline" style="color: #fed766; font-size: 1.25rem; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Prescribing curriculum, textbooks and instructional materials for schools and conducting examinations at the school level in the State of Sikkim</p>
                 <div class="hero-buttons">
-                    <a href="examinations.html" class="btn btn-primary">Examinations</a>
-                    <a href="results.html" class="btn btn-secondary">View Results</a>
+                    <a href="examinations.html" class="btn btn-primary"><i class="fas fa-graduation-cap me-1"></i> Examinations</a>
+                    <a href="results.html" class="btn btn-secondary"><i class="fas fa-poll me-1"></i> View Results</a>
                 </div>
             </div>
         </div>
