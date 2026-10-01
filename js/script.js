@@ -470,6 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initial setup without animation
         track.style.transition = 'none';
         track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        void track.offsetWidth;
         updateDots(0);
         
         function updateDots(activeOriginalIndex) {
@@ -484,6 +485,32 @@ document.addEventListener('DOMContentLoaded', function() {
             return currentIndex - 1;
         }
         
+        let transitionSafetyTimeout = null;
+
+        function handleTransitionEnd(e) {
+            if (e && e.target !== track) return;
+            clearTimeout(transitionSafetyTimeout);
+            isTransitioning = false;
+
+            if (currentIndex >= totalOriginal + 1) {
+                // Reached end clone -> jump seamlessly to first real slide
+                track.style.transition = 'none';
+                currentIndex = 1;
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                void track.offsetWidth;
+            } else if (currentIndex <= 0) {
+                // Reached start clone -> jump seamlessly to last real slide
+                track.style.transition = 'none';
+                currentIndex = totalOriginal;
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                void track.offsetWidth;
+            }
+            updateDots(getOriginalIndex());
+        }
+
+        track.addEventListener('transitionend', handleTransitionEnd);
+        track.addEventListener('transitioncancel', handleTransitionEnd);
+
         function moveToSlide(index) {
             if (isTransitioning) return;
             isTransitioning = true;
@@ -491,6 +518,13 @@ document.addEventListener('DOMContentLoaded', function() {
             track.style.transition = `transform ${transitionDuration}`;
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
             updateDots(getOriginalIndex());
+
+            clearTimeout(transitionSafetyTimeout);
+            transitionSafetyTimeout = setTimeout(() => {
+                if (isTransitioning) {
+                    handleTransitionEnd();
+                }
+            }, 900);
         }
         
         function slideNext() {
@@ -500,23 +534,6 @@ document.addEventListener('DOMContentLoaded', function() {
         function slidePrev() {
             moveToSlide(currentIndex - 1);
         }
-        
-        // Handle infinite wrap-around on transition end
-        track.addEventListener('transitionend', () => {
-            isTransitioning = false;
-            if (currentIndex >= totalOriginal + 1) {
-                // Reached end clone -> jump seamlessly to first real slide
-                track.style.transition = 'none';
-                currentIndex = 1;
-                track.style.transform = `translateX(-${currentIndex * 100}%)`;
-            } else if (currentIndex <= 0) {
-                // Reached start clone -> jump seamlessly to last real slide
-                track.style.transition = 'none';
-                currentIndex = totalOriginal;
-                track.style.transform = `translateX(-${currentIndex * 100}%)`;
-            }
-            updateDots(getOriginalIndex());
-        });
         
         function startAutoSlide() {
             stopAutoSlide();
@@ -557,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Tab Visibility handling: resume when returning to tab
+        // Tab Visibility handling: pause when hidden, resume when returning to tab
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 stopAutoSlide();
@@ -565,26 +582,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 startAutoSlide();
             }
         });
+
+        // Window resize / orientation change handling
+        window.addEventListener('resize', () => {
+            track.style.transition = 'none';
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            void track.offsetWidth;
+        });
         
         // Touch swipe support for mobile
         let touchStartX = 0;
-        let touchEndX = 0;
+        let touchStartY = 0;
         
         slider.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
+            if (e.touches && e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
         }, { passive: true });
         
         slider.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            const diff = touchEndX - touchStartX;
-            if (Math.abs(diff) > 40) {
-                if (diff < 0) {
-                    slideNext();
-                } else {
-                    slidePrev();
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+                
+                // Only trigger if horizontal swipe is dominant and exceeds threshold
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+                    if (diffX < 0) {
+                        slideNext();
+                    } else {
+                        slidePrev();
+                    }
+                    startAutoSlide();
                 }
-                startAutoSlide();
             }
+        }, { passive: true });
+
+        slider.addEventListener('touchcancel', () => {
+            touchStartX = 0;
+            touchStartY = 0;
         }, { passive: true });
         
         // Keyboard arrow support
