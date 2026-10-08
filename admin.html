@@ -243,6 +243,37 @@
                     </div>
                 </div>
 
+                <!-- Multi-Device Cloud Sync Bar -->
+                <div class="sync-banner" style="background: linear-gradient(135deg, #1a365d, #2b6cb0); color: white; padding: 14px 20px; border-radius: var(--radius); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 14px rgba(26,54,93,0.18);">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span id="syncStatusBadge" style="background: rgba(255,255,255,0.18); backdrop-filter: blur(4px); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-circle" id="syncStatusDot" style="color: #48bb78; font-size: 0.65rem;"></i>
+                            <span id="syncStatusText">Cloud Sync: Active</span>
+                        </span>
+                        <span style="font-size: 0.85rem; opacity: 0.9;" id="syncLastTimeText">
+                            <i class="fas fa-clock me-1"></i> Multi-device live sync active
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-sm" style="background: white; color: var(--primary); font-weight: 600; padding: 7px 15px; border-radius: 6px; border: none; cursor: pointer;" onclick="syncNowWithCloud()" title="Check and pull latest students from other devices">
+                            <i class="fas fa-sync-alt me-1" id="syncSpinIcon"></i> Sync Now
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 7px 13px; border-radius: 6px; cursor: pointer;" onclick="openDeviceTransferModal()" title="Share students with another phone or laptop">
+                            <i class="fas fa-mobile-alt me-1"></i> Share / Transfer
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 7px 13px; border-radius: 6px; cursor: pointer;" onclick="SBSEData.downloadBackupJson()" title="Download students.json backup">
+                            <i class="fas fa-download me-1"></i> Export JSON
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 7px 13px; border-radius: 6px; cursor: pointer;" onclick="document.getElementById('importJsonFileInput').click()" title="Import students from a JSON file">
+                            <i class="fas fa-upload me-1"></i> Import JSON
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.18); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 7px 13px; border-radius: 6px; cursor: pointer;" onclick="openCloudSettingsModal()" title="Configure cloud database endpoint">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <input type="file" id="importJsonFileInput" accept=".json" style="display: none;" onchange="handleImportJsonFile(event)">
+                    </div>
+                </div>
+
                 <!-- Enrolled Students Directory Table (Wide, Uncongested View) -->
                 <div class="wide-table-wrapper">
                     <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -518,11 +549,11 @@
         </div>
     </section>
 
-    <!-- OFFICIAL MARKSHEET MODAL -->
+    <!-- OFFICIAL RESULT MODAL -->
     <div id="marksheetModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header no-print">
-                <h3><i class="fas fa-certificate text-warning"></i> Sikkim Board Official Marksheet</h3>
+                <h3><i class="fas fa-certificate text-warning"></i> Sikkim Board Official Result</h3>
                 <button type="button" class="modal-close-btn" onclick="closeMarksheetModal()">&times;</button>
             </div>
 
@@ -535,7 +566,7 @@
                         <p>Established under Sikkim Board of School Education Act No. 19 of 1978</p>
                         <p>Government of Sikkim</p>
                         <div class="marksheet-statement-title" id="marksheetTitleCourse">
-                            STATEMENT OF MARKS - MATRICULATION EXAMINATION
+                            MATRICULATION - 2025-2026
                         </div>
                     </div>
 
@@ -643,8 +674,91 @@
                 <div class="no-print" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 12px;">
                     <button type="button" class="btn btn-secondary" onclick="closeMarksheetModal()">Close</button>
                     <button type="button" class="btn btn-primary" onclick="printCurrentMarksheet()">
-                        <i class="fas fa-print me-2"></i>Print Official Marksheet
+                        <i class="fas fa-print me-2"></i>Print Official Result
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEVICE TRANSFER / SHARE CODE MODAL -->
+    <div id="deviceTransferModal" class="modal-overlay">
+        <div class="modal-container" style="max-width: 620px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-mobile-alt text-warning"></i> Multi-Device Sync & Direct Transfer</h3>
+                <button type="button" class="modal-close-btn" onclick="closeDeviceTransferModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 20px;">
+                    Use this to instantly transfer all student records and examination results from this browser to any other device (mobile phone, laptop, or another administrator) without losing any data.
+                </p>
+
+                <!-- SECTION 1: Export Code -->
+                <div style="background: #f7fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fas fa-arrow-up text-primary me-2"></i>Step 1: Export from this device</span>
+                        <span id="exportCountBadge" style="font-size: 0.8rem; background: #ebf8ff; color: #2b6cb0; padding: 2px 8px; border-radius: 10px;">0 students</span>
+                    </h4>
+                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 10px;">Copy this code and send it via WhatsApp or Email to open on your other device:</p>
+                    <textarea id="exportSyncCodeBox" class="form-control" rows="3" readonly style="font-family: monospace; font-size: 0.8rem; resize: none; background: white; margin-bottom: 10px;"></textarea>
+                    <button type="button" class="btn btn-primary btn-sm w-100" onclick="copySyncCodeToClipboard()" style="width: 100%;">
+                        <i class="fas fa-copy me-2"></i>Copy Transfer Code to Clipboard
+                    </button>
+                </div>
+
+                <!-- SECTION 2: Import Code -->
+                <div style="background: #f7fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px;">
+                    <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 1.05rem;">
+                        <i class="fas fa-arrow-down text-success me-2"></i>Step 2: Import on another device
+                    </h4>
+                    <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 10px;">Paste the transfer code received from another device here:</p>
+                    <textarea id="importSyncCodeBox" class="form-control" rows="3" placeholder="Paste transfer code here..." style="font-family: monospace; font-size: 0.8rem; resize: none; background: white; margin-bottom: 10px;"></textarea>
+                    <button type="button" class="btn btn-success btn-sm w-100" onclick="applyImportSyncCode()" style="width: 100%;">
+                        <i class="fas fa-check-circle me-2"></i>Apply Transfer Code to This Device
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeviceTransferModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLOUD SETTINGS MODAL -->
+    <div id="cloudSettingsModal" class="modal-overlay">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-cloud text-warning"></i> Cloud Database Configuration</h3>
+                <button type="button" class="modal-close-btn" onclick="closeCloudSettingsModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 15px;">
+                    Sikkim Board student records automatically synchronize live across all devices using the cloud database endpoint below.
+                </p>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label for="cloudEndpointInput"><strong>Cloud Sync Endpoint URL</strong></label>
+                    <input type="url" id="cloudEndpointInput" class="form-control" placeholder="https://your-project.firebaseio.com/students.json" style="font-family: monospace; font-size: 0.9rem;">
+                    <small style="color: var(--text-gray); display: block; margin-top: 6px;">
+                        Supports Firebase Realtime Database (<code>https://&lt;id&gt;.firebaseio.com/students.json</code>) or any REST JSON endpoint.
+                    </small>
+                </div>
+
+                <div style="background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.85rem; color: #2b6cb0;">
+                    <i class="fas fa-info-circle me-1"></i> Default cloud endpoint is pre-configured so any device opening the admin panel or results portal automatically sees the latest records.
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetCloudEndpointDefault()">
+                        <i class="fas fa-undo me-1"></i> Reset to Default
+                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeCloudSettingsModal()">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="saveCloudEndpointConfig()">
+                            <i class="fas fa-save me-1"></i> Save Configuration
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1433,7 +1547,7 @@
 
             // Fill Marksheet Data
             document.getElementById('marksheetTitleCourse').textContent = 
-                `STATEMENT OF MARKS - ${student.course} EXAMINATION ${student.passingYear || '2026'}`;
+                `${student.course} - ${student.session || '2025-2026'}`;
 
             document.getElementById('msStudentName').textContent = student.name;
             document.getElementById('msRollNumber').textContent = student.rollNumber;
@@ -1525,7 +1639,7 @@
             }
             const cleanName = (currentViewingStudent.name || 'STUDENT').trim().toUpperCase();
             const originalTitle = document.title;
-            const printTitle = `${cleanName} - Official Marksheet - SBSE`;
+            const printTitle = `${cleanName} - Official Result - SBSE`;
 
             document.title = printTitle;
 
@@ -1581,10 +1695,182 @@
             setTimeout(() => notification.remove(), 4000);
         }
 
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', function() {
+        // =========================================================================
+        // MULTI-DEVICE & CLOUD SYNCHRONIZATION CONTROLS
+        // =========================================================================
+        async function syncNowWithCloud() {
+            const icon = document.getElementById('syncSpinIcon');
+            if (icon) icon.classList.add('fa-spin');
+            const dot = document.getElementById('syncStatusDot');
+            const statusText = document.getElementById('syncStatusText');
+            if (statusText) statusText.textContent = 'Syncing...';
+
+            try {
+                await SBSEData.syncFromRemote(true);
+                renderDashboard();
+                populateStudentSelectDropdown();
+                updateSyncStatusDisplay('synced');
+                showToastNotification('Multi-device sync complete! All records updated.', 'success');
+            } catch (e) {
+                console.error(e);
+                updateSyncStatusDisplay('error');
+                showToastNotification('Could not sync with cloud. Operating in local mode.', 'error');
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+            }
+        }
+
+        function updateSyncStatusDisplay(status) {
+            const dot = document.getElementById('syncStatusDot');
+            const text = document.getElementById('syncStatusText');
+            const timeText = document.getElementById('syncLastTimeText');
+            const lastTime = localStorage.getItem('sbse_last_sync_time');
+
+            if (dot && text) {
+                if (status === 'synced') {
+                    dot.style.color = '#48bb78';
+                    text.textContent = 'Cloud Sync: Active';
+                } else if (status === 'local_only') {
+                    dot.style.color = '#ecc94b';
+                    text.textContent = 'Local Mode';
+                } else {
+                    dot.style.color = '#e53e3e';
+                    text.textContent = 'Sync Offline';
+                }
+            }
+
+            if (timeText && lastTime) {
+                try {
+                    const dt = new Date(lastTime);
+                    timeText.innerHTML = `<i class="fas fa-clock me-1"></i> Synced: ${dt.toLocaleTimeString()}`;
+                } catch(e) {}
+            }
+        }
+
+        // Device Transfer Modal
+        function openDeviceTransferModal() {
+            const code = SBSEData.exportSyncCode();
+            const box = document.getElementById('exportSyncCodeBox');
+            const badge = document.getElementById('exportCountBadge');
+            const students = SBSEData.getStudents();
+            if (box) box.value = code;
+            if (badge) badge.textContent = `${students.length} students`;
+            const importBox = document.getElementById('importSyncCodeBox');
+            if (importBox) importBox.value = '';
+            document.getElementById('deviceTransferModal').style.display = 'block';
+        }
+
+        function closeDeviceTransferModal() {
+            document.getElementById('deviceTransferModal').style.display = 'none';
+        }
+
+        function copySyncCodeToClipboard() {
+            const box = document.getElementById('exportSyncCodeBox');
+            if (box && box.value) {
+                box.select();
+                navigator.clipboard.writeText(box.value).then(() => {
+                    showToastNotification('Transfer code copied to clipboard! You can now send it to your other device.', 'success');
+                }).catch(() => {
+                    document.execCommand('copy');
+                    showToastNotification('Transfer code copied to clipboard!', 'success');
+                });
+            }
+        }
+
+        function applyImportSyncCode() {
+            const box = document.getElementById('importSyncCodeBox');
+            const val = box ? box.value.trim() : '';
+            if (!val) {
+                showToastNotification('Please paste a transfer code first.', 'error');
+                return;
+            }
+            try {
+                const imported = SBSEData.importSyncCode(val);
+                closeDeviceTransferModal();
+                renderDashboard();
+                populateStudentSelectDropdown();
+                showToastNotification(`Successfully imported ${imported.length} student records to this device!`, 'success');
+            } catch (e) {
+                showToastNotification('Invalid transfer code. Please copy and paste again.', 'error');
+            }
+        }
+
+        function handleImportJsonFile(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const list = SBSEData.importFromJsonString(e.target.result);
+                    renderDashboard();
+                    populateStudentSelectDropdown();
+                    showToastNotification(`Successfully imported ${list.length} student records from JSON!`, 'success');
+                } catch(err) {
+                    showToastNotification('Failed to parse JSON file: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Cloud Settings Modal
+        function openCloudSettingsModal() {
+            const input = document.getElementById('cloudEndpointInput');
+            if (input) input.value = SBSEData.getCloudSyncUrl();
+            document.getElementById('cloudSettingsModal').style.display = 'block';
+        }
+
+        function closeCloudSettingsModal() {
+            document.getElementById('cloudSettingsModal').style.display = 'none';
+        }
+
+        function saveCloudEndpointConfig() {
+            const input = document.getElementById('cloudEndpointInput');
+            const val = input ? input.value.trim() : '';
+            SBSEData.setCloudSyncUrl(val);
+            closeCloudSettingsModal();
+            showToastNotification('Cloud sync endpoint updated!', 'success');
+            syncNowWithCloud();
+        }
+
+        function resetCloudEndpointDefault() {
+            SBSEData.setCloudSyncUrl(null);
+            const input = document.getElementById('cloudEndpointInput');
+            if (input) input.value = SBSEData.getCloudSyncUrl();
+            showToastNotification('Reset cloud sync to default endpoint.', 'success');
+        }
+
+        // Listen for automatic multi-tab and remote sync updates
+        window.addEventListener('sbse_data_updated', function() {
             renderDashboard();
             populateStudentSelectDropdown();
+            updateSyncStatusDisplay('synced');
+        });
+
+        window.addEventListener('sbse_sync_status_changed', function(e) {
+            updateSyncStatusDisplay(e.detail?.status || 'synced');
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            renderDashboard();
+            populateStudentSelectDropdown();
+            updateSyncStatusDisplay('synced');
+
+            // Initial remote sync
+            try {
+                await SBSEData.syncFromRemote();
+                renderDashboard();
+                populateStudentSelectDropdown();
+                updateSyncStatusDisplay('synced');
+            } catch(e) {}
+
+            // Background periodic sync every 25 seconds while panel is open
+            setInterval(async () => {
+                try {
+                    await SBSEData.syncFromRemote();
+                } catch(e) {}
+            }, 25000);
         });
     </script>
 </body>

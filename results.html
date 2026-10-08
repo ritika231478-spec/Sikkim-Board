@@ -123,7 +123,7 @@
                     <p>Established under Sikkim Board of School Education Act No. 19 of 1978</p>
                     <p>Gangtok, Sikkim - 737101</p>
                     <div class="marksheet-statement-title" id="outExamTitle">
-                        STATEMENT OF MARKS
+                        OFFICIAL RESULT
                     </div>
                 </div>
 
@@ -231,7 +231,7 @@
             <!-- Print Actions -->
             <div class="no-print" style="text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
                 <button type="button" class="btn btn-primary" onclick="printCurrentMarksheet()">
-                    <i class="fas fa-print me-2"></i>Print Official Marksheet
+                    <i class="fas fa-print me-2"></i>Print Official Result
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="resetResultSearch()" style="color: var(--primary); border: 2px solid var(--border);">
                     <i class="fas fa-search me-2"></i>Check Another Roll Number
@@ -418,7 +418,7 @@
             this.value = formatted;
         });
 
-        document.getElementById('checkResultForm')?.addEventListener('submit', function(e) {
+        document.getElementById('checkResultForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             const rollNumber = document.getElementById('searchRollNumber').value.trim();
             const inputDob = document.getElementById('searchDob').value;
@@ -428,7 +428,17 @@
                 return;
             }
 
-            const student = SBSEData.getStudentByRoll(rollNumber);
+            let student = SBSEData.getStudentByRoll(rollNumber);
+            if (!student && typeof SBSEData.syncFromRemote === 'function') {
+                const btn = e.target.querySelector('button[type="submit"]');
+                const origText = btn ? btn.innerHTML : '';
+                if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Checking Records...';
+                try {
+                    await SBSEData.syncFromRemote(true);
+                    student = SBSEData.getStudentByRoll(rollNumber);
+                } catch(err) {}
+                if (btn) btn.innerHTML = origText;
+            }
 
             if (!student) {
                 showToastNotification(`No student record found with Roll Number "${rollNumber}". Please verify and try again.`, 'error');
@@ -455,7 +465,7 @@
 
             // Render Marksheet (All Uppercase and DD/MM/YYYY)
             document.getElementById('outExamTitle').textContent = 
-                `STATEMENT OF MARKS - ${student.course} EXAMINATION ${student.passingYear || '2026'}`;
+                `${student.course} - ${student.session || '2025-2026'}`;
 
             document.getElementById('outName').textContent = student.name;
             document.getElementById('outRoll').textContent = student.rollNumber;
@@ -549,7 +559,7 @@
             }
             const cleanName = (currentResultStudent.name || 'STUDENT').trim().toUpperCase();
             const originalTitle = document.title;
-            const printTitle = `${cleanName} - Official Marksheet - SBSE`;
+            const printTitle = `${cleanName} - Official Result - SBSE`;
 
             document.title = printTitle;
 

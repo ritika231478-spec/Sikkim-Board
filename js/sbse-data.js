@@ -306,6 +306,9 @@ const SBSEData = {
         }
         
         localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(students));
+        if (typeof this.pushToRemote === 'function') {
+            this.pushToRemote();
+        }
         return students;
     },
 
@@ -328,6 +331,9 @@ const SBSEData = {
         let students = this.getStudents();
         students = students.filter(s => String(s.id) !== String(id));
         localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(students));
+        if (typeof this.pushToRemote === 'function') {
+            this.pushToRemote();
+        }
         return students;
     },
 
@@ -430,9 +436,226 @@ const SBSEData = {
         student.resultsUpdated = new Date().toISOString();
 
         localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(students));
+        if (typeof this.pushToRemote === 'function') {
+            this.pushToRemote();
+        }
         return student;
+    },
+
+    // =========================================================================
+    // MULTI-DEVICE & CLOUD SYNCHRONIZATION ENGINE
+    // =========================================================================
+    getCloudSyncUrl: function() {
+        return localStorage.getItem('sbse_cloud_sync_url') || 'https://kvdb.io/DTxNzTGCuLFEq7MFBhGgtw/sikkimStudents';
+    },
+
+    setCloudSyncUrl: function(url) {
+        if (url && typeof url === 'string' && url.trim()) {
+            localStorage.setItem('sbse_cloud_sync_url', url.trim());
+        } else {
+            localStorage.removeItem('sbse_cloud_sync_url');
+        }
+    },
+
+    getDataFileUrl: function() {
+        return 'data/students.json';
+    },
+
+    // Push local students array to remote cloud endpoint
+    pushToRemote: async function() {
+        const url = this.getCloudSyncUrl();
+        if (!url) return false;
+        try {
+            const students = this.getStudents();
+            const method = url.includes('.firebaseio.com') || url.includes('kvdb.io') ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(students)
+            });
+            if (res.ok) {
+                localStorage.setItem('sbse_last_sync_time', new Date().toISOString());
+                localStorage.setItem('sbse_sync_status', 'synced');
+                window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
+                    detail: { status: 'synced', time: new Date().toISOString() }
+                }));
+                return true;
+            }
+        } catch (e) {
+            console.warn('SBSEData: pushToRemote failed (offline/local fallback active)', e);
+            localStorage.setItem('sbse_sync_status', 'local_only');
+            window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
+                detail: { status: 'local_only', time: new Date().toISOString() }
+            }));
+        }
+        return false;
+    },
+
+    // Pull from cloud & data/students.json, merge with local storage
+    syncFromRemote: async function(force = false) {
+        let remoteStudents = null;
+        let sourceUsed = '';
+
+        // 1. Try cloud endpoint first
+        const cloudUrl = this.getCloudSyncUrl();
+        if (cloudUrl) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4500);
+                const res = await fetch(cloudUrl, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) {
+                        remoteStudents = data;
+                        sourceUsed = 'cloud';
+                    }
+                }
+            } catch (e) {
+                // Cloud unavailable or timeout
+            }
+        }
+
+        // 2. Fallback to data/students.json
+        if (!remoteStudents || remoteStudents.length === 0) {
+            try {
+                const res = await fetch(this.getDataFileUrl() + '?t=' + Date.now());
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        remoteStudents = data;
+                        sourceUsed = 'file';
+                    }
+                }
+            } catch (e) {
+                // File unavailable
+            }
+        }
+
+        if (!remoteStudents || !Array.isArray(remoteStudents)) {
+            return this.getStudents();
+        }
+
+        // Merge remote with local records
+        const localStudents = this.getStudents();
+        const mergedMap = new Map();
+
+        // Populate map with local students
+        localStudents.forEach(s => {
+            const key = (s.rollNumber || s.id || '').trim().toUpperCase();
+            if (key) mergedMap.set(key, s);
+        });
+
+        let changesCount = 0;
+        remoteStudents.forEach(remote => {
+            if (!remote) return;
+            const key = (remote.rollNumber || remote.id || '').trim().toUpperCase();
+            if (!key) return;
+
+            if (!mergedMap.has(key)) {
+                mergedMap.set(key, remote);
+                changesCount++;
+            } else {
+                const local = mergedMap.get(key);
+                const localHasResults = local.results && local.results.length > 0;
+                const remoteHasResults = remote.results && remote.results.length > 0;
+                const remoteTime = new Date(remote.updatedAt || remote.resultsUpdated || remote.createdAt || 0).getTime();
+                const localTime = new Date(local.updatedAt || local.resultsUpdated || local.createdAt || 0).getTime();
+
+                if ((!localHasResults && remoteHasResults) || (remoteTime > localTime)) {
+                    mergedMap.set(key, { ...local, ...remote });
+                    changesCount++;
+                }
+            }
+        });
+
+        const mergedList = Array.from(mergedMap.values());
+        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(mergedList));
+        localStorage.setItem('sbse_last_sync_time', new Date().toISOString());
+        localStorage.setItem('sbse_sync_status', 'synced');
+
+        // If local had extra records, push back to cloud
+        if (mergedList.length > (remoteStudents ? remoteStudents.length : 0)) {
+            this.pushToRemote();
+        }
+
+        window.dispatchEvent(new CustomEvent('sbse_data_updated', {
+            detail: { students: mergedList, source: sourceUsed, changesCount }
+        }));
+        window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
+            detail: { status: 'synced', time: new Date().toISOString() }
+        }));
+
+        return mergedList;
+    },
+
+    // Download students.json file backup
+    downloadBackupJson: function() {
+        const students = this.getStudents();
+        const jsonStr = JSON.stringify(students, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'students.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+
+    // Export compact Base64 sync code
+    exportSyncCode: function() {
+        const students = this.getStudents();
+        const json = JSON.stringify(students);
+        return btoa(unescape(encodeURIComponent(json)));
+    },
+
+    // Import compact Base64 sync code
+    importSyncCode: function(code) {
+        if (!code || typeof code !== 'string') throw new Error('Please enter a valid sync code.');
+        const json = decodeURIComponent(escape(atob(code.trim())));
+        const list = JSON.parse(json);
+        if (!Array.isArray(list)) throw new Error('Invalid student data payload.');
+        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(list));
+        this.pushToRemote();
+        window.dispatchEvent(new CustomEvent('sbse_data_updated', { detail: { students: list } }));
+        return list;
+    },
+
+    // Import from JSON text / file
+    importFromJsonString: function(jsonStr) {
+        const list = JSON.parse(jsonStr);
+        if (!Array.isArray(list)) throw new Error('Uploaded JSON file must contain a list of student records.');
+        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(list));
+        this.pushToRemote();
+        window.dispatchEvent(new CustomEvent('sbse_data_updated', { detail: { students: list } }));
+        return list;
+    },
+
+    // Automatic initialization & multi-tab synchronization
+    init: function() {
+        // Multi-tab listener: updates across tabs of the same browser
+        window.addEventListener('storage', (e) => {
+            if (e.key === SBSE_STORAGE_KEY) {
+                try {
+                    const updated = JSON.parse(e.newValue || '[]');
+                    window.dispatchEvent(new CustomEvent('sbse_data_updated', {
+                        detail: { students: updated, source: 'localStorage' }
+                    }));
+                } catch(err) {}
+            }
+        });
+
+        // Perform background sync on startup
+        this.syncFromRemote().catch(e => console.warn('Background sync error', e));
     }
 };
+
+// Auto-run init on load
+if (typeof window !== 'undefined') {
+    SBSEData.init();
+}
 
 // Calculate Marksheet Issue Date:
 // Any date in August of the student's final examination year, strictly guaranteed NOT to be Sunday
