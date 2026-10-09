@@ -284,13 +284,63 @@ const SBSEData = {
             enrolledSubjects: student.enrolledSubjects && student.enrolledSubjects.length > 0 ? student.enrolledSubjects : this.getDefaultSubjects(student.course)
         };
 
-        const existingIndex = students.findIndex(s => 
-            String(s.id) === String(sanitized.id) || 
-            (s.rollNumber && s.rollNumber.trim().toUpperCase() === normalizedRoll)
-        );
+        // Check for duplicate roll number on a DIFFERENT student
+        if (sanitized.id) {
+            const conflict = students.find(s => 
+                s.rollNumber && s.rollNumber.trim().toUpperCase() === normalizedRoll && 
+                String(s.id) !== String(sanitized.id)
+            );
+            if (conflict) {
+                throw new Error(`Roll number "${normalizedRoll}" is already assigned to ${conflict.name}.`);
+            }
+        }
+
+        let existingIndex = -1;
+        if (sanitized.id) {
+            existingIndex = students.findIndex(s => String(s.id) === String(sanitized.id));
+        }
+        if (existingIndex < 0 && normalizedRoll) {
+            existingIndex = students.findIndex(s => s.rollNumber && s.rollNumber.trim().toUpperCase() === normalizedRoll);
+        }
         
         if (existingIndex >= 0) {
-            students[existingIndex] = { ...students[existingIndex], ...sanitized, updatedAt: new Date().toISOString() };
+            const currentStudent = students[existingIndex];
+            let updatedResults = currentStudent.results || [];
+
+            // If enrolledSubjects was modified and student already had results:
+            if (Array.isArray(sanitized.enrolledSubjects) && updatedResults.length > 0) {
+                const newResults = [];
+                sanitized.enrolledSubjects.forEach(sub => {
+                    const found = updatedResults.find(r => (r.subjectCode || '').toUpperCase() === (sub.code || '').toUpperCase());
+                    if (found) {
+                        newResults.push({
+                            ...found,
+                            subjectName: sub.name,
+                            maxMarks: sub.maxMarks || found.maxMarks || 100
+                        });
+                    } else {
+                        newResults.push({
+                            subjectCode: sub.code,
+                            subjectName: sub.name,
+                            maxMarks: sub.maxMarks || 100,
+                            theory: 0,
+                            practical: 'XX',
+                            marks: 0,
+                            total: 0
+                        });
+                    }
+                });
+                updatedResults = newResults;
+                const calc = this.calculateResult(updatedResults);
+                sanitized.results = updatedResults;
+                sanitized.totalMarks = calc.totalMarks;
+                sanitized.maxTotal = calc.maxTotal;
+                sanitized.percentage = calc.percentage;
+                sanitized.grade = calc.grade;
+                sanitized.status = calc.status;
+            }
+
+            students[existingIndex] = { ...currentStudent, ...sanitized, updatedAt: new Date().toISOString() };
         } else {
             students.unshift({
                 id: sanitized.id || 'STU_' + Date.now(),
@@ -310,6 +360,11 @@ const SBSEData = {
             this.pushToRemote();
         }
         return students;
+    },
+
+    // Update existing student helper
+    updateStudent: function(id, studentData) {
+        return this.saveStudent({ ...studentData, id });
     },
 
     // Find student by ID

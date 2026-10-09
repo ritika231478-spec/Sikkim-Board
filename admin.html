@@ -302,7 +302,7 @@
                                     <th style="width: 130px;">Course</th>
                                     <th style="min-width: 220px;">Permanent Address</th>
                                     <th style="width: 110px;">Result Status</th>
-                                    <th style="width: 160px; text-align: center;">Actions</th>
+                                    <th style="width: 215px; text-align: center;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="studentsTableBody">
@@ -374,12 +374,15 @@
                             </div>
                             <div class="form-group">
                                 <label for="sessionSelect">Academic Session <span class="text-danger" style="color: #e53e3e;">*</span></label>
-                                <select id="sessionSelect" class="form-control" required>
-                                    <option value="2025-2026">2025-2026</option>
-                                    <option value="2024-2025">2024-2025</option>
-                                    <option value="2026-2027">2026-2027</option>
-                                    <option value="2023-2024">2023-2024</option>
-                                </select>
+                                <input type="text" id="sessionSelect" class="form-control" placeholder="E.G. 2025-2026" list="academicSessionDatalist" value="2025-2026" required>
+                                <datalist id="academicSessionDatalist">
+                                    <option value="2025-2026">
+                                    <option value="2024-2025">
+                                    <option value="2026-2027">
+                                    <option value="2023-2024">
+                                    <option value="2022-2023">
+                                </datalist>
+                                <small style="color: var(--text-gray); font-size: 0.78rem;">Enter academic session manually (e.g. 2025-2026, 2024-2025)</small>
                             </div>
                         </div>
 
@@ -463,7 +466,12 @@
 
                             <!-- Student Info Card (Active on selection) -->
                             <div id="selectedStudentPill" class="student-flow-pill" style="display: none;">
-                                <h4><i class="fas fa-id-badge"></i> <span id="pillStudentName">STUDENT NAME</span></h4>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                                    <h4 style="margin: 0;"><i class="fas fa-id-badge"></i> <span id="pillStudentName">STUDENT NAME</span></h4>
+                                    <button type="button" class="btn btn-sm" id="btnEditFromMarksTab" style="background: #d97706; color: white; padding: 4px 10px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; border: none; cursor: pointer;" onclick="const sid = document.getElementById('studentSelect')?.value; if(sid) openEditStudentModal(sid);">
+                                        <i class="fas fa-user-edit me-1"></i>Edit Student Details
+                                    </button>
+                                </div>
                                 <div class="flow-details-grid">
                                     <div><strong>Roll No:</strong> <span id="pillRoll">---</span></div>
                                     <div><strong>Course:</strong> <span id="pillCourse">---</span></div>
@@ -672,12 +680,135 @@
                     </div>
                 </div>
 
-                <div class="no-print" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 12px;">
+                <div class="no-print" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-sm" style="background: #d97706; color: white; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;" onclick="if(currentViewingStudent) { closeMarksheetModal(); openEditStudentModal(currentViewingStudent.id); }">
+                        <i class="fas fa-user-edit me-1"></i>Edit Student Details
+                    </button>
                     <button type="button" class="btn btn-secondary" onclick="closeMarksheetModal()">Close</button>
                     <button type="button" class="btn btn-primary" onclick="printCurrentMarksheet()">
                         <i class="fas fa-print me-2"></i>Print Official Result
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT STUDENT DETAILS MODAL -->
+    <div id="editStudentModal" class="modal-overlay">
+        <div class="modal-container" style="max-width: 950px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-edit text-warning"></i> Edit Student Details</h3>
+                <button type="button" class="modal-close-btn" onclick="closeEditStudentModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 28px 30px; max-height: calc(88vh - 70px); overflow-y: auto;">
+                <form id="editStudentForm" class="uppercase-form">
+                    <input type="hidden" id="editStudentId">
+
+                    <div style="background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 12px 18px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <span style="font-weight: 700; color: #2b6cb0; font-size: 1.05rem;" id="editModalStudentNameBadge">EDITING STUDENT</span>
+                            <span style="margin-left: 10px; font-size: 0.9rem; color: #4a5568; font-weight: 600;" id="editModalRollBadge"></span>
+                        </div>
+                        <span id="editModalResultStatusBadge" class="badge-status badge-pending">PENDING</span>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="editStudentName">Student Full Name <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="text" id="editStudentName" class="form-control" placeholder="E.G. AASHISH BAGH" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editRollNumber">Roll Number <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="text" id="editRollNumber" class="form-control" placeholder="E.G. SBSE-2026-105" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editRegistrationNumber">Registration Number <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="text" id="editRegistrationNumber" class="form-control" placeholder="E.G. SBSE/REG/2025/1102" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="editDob">Date of Birth (DD/MM/YYYY) <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="editDob" class="form-control" placeholder="DD/MM/YYYY" maxlength="10" required>
+                                <input type="date" id="editDobPickerHidden" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+                                <button type="button" class="btn btn-secondary" id="editBtnDobCalendar" title="Pick from calendar" style="padding: 10px 14px; border: 1px solid var(--border); background: #f8fafc;">
+                                    <i class="fas fa-calendar-alt text-primary"></i>
+                                </button>
+                            </div>
+                            <small style="color: var(--text-gray); font-size: 0.78rem;">Format: DD/MM/YYYY (e.g. 01/01/1990)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="editFatherName">Father's Name <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="text" id="editFatherName" class="form-control" placeholder="E.G. PITAMBAR BAGH" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMotherName">Mother's Name <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="text" id="editMotherName" class="form-control" placeholder="E.G. RANI BAGH" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editCourseSelect">Course / Level <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <select id="editCourseSelect" class="form-control" required>
+                                <option value="MATRICULATION">MATRICULATION (10th)</option>
+                                <option value="INTERMEDIATE">INTERMEDIATE (12th)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editSession">Academic Session <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="text" id="editSession" class="form-control" placeholder="E.G. 2025-2026" list="academicSessionDatalist" required>
+                            <small style="color: var(--text-gray); font-size: 0.78rem;">Enter academic session manually (e.g. 2025-2026, 2024-2025)</small>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="editPassingYear">Examination / Passing Year <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                            <input type="number" id="editPassingYear" class="form-control" min="2000" max="2035" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editMarksheetIssueDate">Date of Issue (DD/MM/YYYY) <small style="color: #718096; font-weight: normal;">(August of Final Year, Non-Sunday)</small></label>
+                            <input type="text" id="editMarksheetIssueDate" class="form-control" placeholder="DD/MM/YYYY (E.G. 18/08/2026)">
+                        </div>
+                    </div>
+
+                    <!-- Enrolled Subjects Picker in Edit Modal -->
+                    <div class="subject-picker-container" style="margin-top: 15px; margin-bottom: 20px;">
+                        <div class="subject-picker-header">
+                            <h4><i class="fas fa-book-reader text-primary"></i> Enrolled Examination Subjects</h4>
+                            <div class="subject-picker-actions">
+                                <span class="badge-subject-count" id="editSelectedSubjectsCount">0 Subjects Selected</span>
+                                <button type="button" class="btn btn-sm" id="btnEditSelectCoreDefaults" style="padding: 4px 10px; font-size: 0.8rem; background: #ebf8ff; border: 1px solid #3182ce; color: #2b6cb0;">
+                                    <i class="fas fa-check-double me-1"></i>Select 5-6 Core Subjects
+                                </button>
+                                <button type="button" class="btn btn-sm" id="btnEditClearSubjects" style="padding: 4px 10px; font-size: 0.8rem; background: #fff; border: 1px solid #cbd5e0; color: #4a5568;">
+                                    Clear Selection
+                                </button>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 12px;">
+                            Check or uncheck the examination subjects this student is registered for.
+                        </p>
+                        <div id="editSubjectGroupsContainer"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editAddress">Full Permanent Address <span class="text-danger" style="color: #e53e3e;">*</span></label>
+                        <textarea id="editAddress" class="form-control" rows="2" style="min-height: 80px;" placeholder="HOUSE/WARD, STREET, DISTRICT, PIN CODE, STATE" required></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeEditStudentModal()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="background: #d97706; border-color: #d97706; color: white; padding: 10px 22px; font-weight: 600;">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -954,6 +1085,28 @@
         });
 
         // ================= DASHBOARD & STUDENTS DIRECTORY =================
+        function populateSessionFilter() {
+            const sessionFilter = document.getElementById('sessionFilter');
+            if (!sessionFilter) return;
+            const currentVal = sessionFilter.value;
+            const students = SBSEData.getStudents();
+            const sessions = new Set(['2025-2026', '2024-2025', '2026-2027', '2023-2024']);
+            students.forEach(s => {
+                if (s.session && s.session.trim()) {
+                    sessions.add(s.session.trim().toUpperCase());
+                }
+            });
+            const sorted = Array.from(sessions).sort().reverse();
+            sessionFilter.innerHTML = '<option value="">ALL SESSIONS</option>' + 
+                sorted.map(sess => `<option value="${sess}" ${sess === currentVal ? 'selected' : ''}>SESSION ${sess}</option>`).join('');
+
+            // Also keep the datalist populated with any newly entered sessions!
+            const dl = document.getElementById('academicSessionDatalist');
+            if (dl) {
+                dl.innerHTML = sorted.map(sess => `<option value="${sess}">`).join('');
+            }
+        }
+
         function renderDashboard() {
             const students = SBSEData.getStudents();
 
@@ -967,6 +1120,7 @@
             document.getElementById('stat12thStudents').textContent = interCount;
             document.getElementById('statResultsDeclared').textContent = resultsDeclaredCount;
 
+            populateSessionFilter();
             renderStudentsTable();
         }
 
@@ -1026,13 +1180,16 @@
                         <td>${statusBadge}</td>
                         <td style="text-align: center;">
                             <div class="action-btns-group">
-                                <button class="btn btn-sm" style="background: #2b6cb0; color: white; padding: 5px 10px; font-size: 0.82rem;" title="Enter / Edit Marks" onclick="quickEditMarks('${s.id}')">
+                                <button class="btn btn-sm" style="background: #d97706; color: white; padding: 5px 9px; font-size: 0.82rem; font-weight: 600;" title="Edit Student Details" onclick="openEditStudentModal('${s.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm" style="background: #2b6cb0; color: white; padding: 5px 9px; font-size: 0.82rem;" title="Enter / Edit Marks" onclick="quickEditMarks('${s.id}')">
                                     <i class="fas fa-marker"></i> Marks
                                 </button>
-                                <button class="btn btn-sm" style="background: #319795; color: white; padding: 5px 10px; font-size: 0.82rem;" title="View Marksheet" onclick="openMarksheet('${s.id}')">
+                                <button class="btn btn-sm" style="background: #319795; color: white; padding: 5px 9px; font-size: 0.82rem;" title="View Marksheet" onclick="openMarksheet('${s.id}')">
                                     <i class="fas fa-file-alt"></i>
                                 </button>
-                                <button class="btn btn-sm" style="background: #e53e3e; color: white; padding: 5px 8px; font-size: 0.82rem;" title="Delete Student" onclick="deleteStudentRecord('${s.id}', '${s.name}')">
+                                <button class="btn btn-sm" style="background: #e53e3e; color: white; padding: 5px 8px; font-size: 0.82rem;" title="Delete Student" onclick="deleteStudentRecord('${s.id}', '${(s.name || '').replace(/'/g, "\\'")}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -1175,14 +1332,31 @@
             this.dataset.userEdited = 'true';
         });
 
-        document.getElementById('sessionSelect')?.addEventListener('change', function() {
-            const parts = this.value.split('-');
-            if (parts.length > 1 && document.getElementById('passingYear')) {
-                document.getElementById('passingYear').value = parts[1].trim();
+        function handleSessionInputChange(sessionInputElem, passingYearElem, issueInputElem) {
+            if (!sessionInputElem) return;
+            const val = sessionInputElem.value.trim();
+            const parts = val.split(/[-/]/);
+            if (parts.length > 1 && passingYearElem) {
+                let yr = parts[parts.length - 1].trim();
+                if (yr.length === 2) yr = '20' + yr;
+                if (!isNaN(parseInt(yr)) && yr.length === 4) {
+                    passingYearElem.value = yr;
+                }
             }
-            const issueInput = document.getElementById('marksheetIssueDate');
-            if (issueInput) delete issueInput.dataset.userEdited;
-            updateEnrollmentIssueDate();
+            if (issueInputElem && !issueInputElem.dataset.userEdited) {
+                issueInputElem.value = SBSEData.getMarksheetIssueDate({
+                    session: val,
+                    passingYear: passingYearElem?.value || '2026'
+                });
+            }
+        }
+
+        document.getElementById('sessionSelect')?.addEventListener('input', function() {
+            handleSessionInputChange(this, document.getElementById('passingYear'), document.getElementById('marksheetIssueDate'));
+        });
+
+        document.getElementById('sessionSelect')?.addEventListener('change', function() {
+            handleSessionInputChange(this, document.getElementById('passingYear'), document.getElementById('marksheetIssueDate'));
         });
 
         document.getElementById('passingYear')?.addEventListener('input', function() {
@@ -1632,6 +1806,306 @@
             document.getElementById('marksheetModal').style.display = 'none';
         };
 
+        // ================= EDIT STUDENT MODAL LOGIC & SUBJECT PICKER =================
+        function renderEditSubjectSelectionGrid(course, selectedCodes = []) {
+            const catalog = SBSE_FULL_SUBJECT_CATALOG[course] || SBSE_FULL_SUBJECT_CATALOG.MATRICULATION;
+            const container = document.getElementById('editSubjectGroupsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const selectedSet = new Set(selectedCodes.map(c => String(c).toUpperCase()));
+
+            catalog.groups.forEach((group) => {
+                const groupBox = document.createElement('div');
+                groupBox.className = 'subject-group-box';
+                groupBox.innerHTML = `
+                    <h5>${group.name}</h5>
+                    <div class="subject-checkbox-grid">
+                        ${group.subjects.map(s => {
+                            const isChecked = selectedSet.size > 0 ? selectedSet.has(String(s.code).toUpperCase()) : s.isDefault;
+                            return `
+                                <label class="subject-checkbox-label ${isChecked ? 'checked' : ''}" id="edit_lbl_sub_${s.code}">
+                                    <input type="checkbox" class="edit-subject-checkbox" value="${s.code}" data-code="${s.code}" data-name="${s.name}" data-max="${s.maxMarks}" ${isChecked ? 'checked' : ''} onchange="updateEditSelectedSubjectsCount()">
+                                    <span><strong>${s.code}</strong> - ${s.name}</span>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(groupBox);
+            });
+
+            updateEditSelectedSubjectsCount();
+        }
+
+        window.updateEditSelectedSubjectsCount = function() {
+            const checkboxes = document.querySelectorAll('.edit-subject-checkbox:checked');
+            const total = checkboxes.length;
+            const badge = document.getElementById('editSelectedSubjectsCount');
+            if (badge) {
+                badge.textContent = `${total} Subjects Selected`;
+            }
+
+            document.querySelectorAll('.edit-subject-checkbox').forEach(cb => {
+                const lbl = document.getElementById('edit_lbl_sub_' + cb.value);
+                if (lbl) {
+                    if (cb.checked) lbl.classList.add('checked');
+                    else lbl.classList.remove('checked');
+                }
+            });
+        };
+
+        // Edit Modal Core Defaults & Clear Buttons
+        document.getElementById('btnEditSelectCoreDefaults')?.addEventListener('click', function() {
+            const course = document.getElementById('editCourseSelect')?.value;
+            if (!course) return;
+            const defaults = SBSEData.getDefaultSubjects(course).map(s => s.code);
+            document.querySelectorAll('.edit-subject-checkbox').forEach(cb => {
+                cb.checked = defaults.includes(cb.value);
+            });
+            updateEditSelectedSubjectsCount();
+        });
+
+        document.getElementById('btnEditClearSubjects')?.addEventListener('click', function() {
+            document.querySelectorAll('.edit-subject-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            updateEditSelectedSubjectsCount();
+        });
+
+        // Edit Modal Course Change
+        document.getElementById('editCourseSelect')?.addEventListener('change', function() {
+            const course = this.value;
+            const defaults = SBSEData.getDefaultSubjects(course).map(s => s.code);
+            renderEditSubjectSelectionGrid(course, defaults);
+        });
+
+        // Edit Modal Date of Birth Masking & Calendar
+        const editDobInput = document.getElementById('editDob');
+        const editDobPickerHidden = document.getElementById('editDobPickerHidden');
+        const editBtnDobCalendar = document.getElementById('editBtnDobCalendar');
+
+        editDobInput?.addEventListener('input', function() {
+            let v = this.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.substring(0, 8);
+            let formatted = '';
+            if (v.length > 4) {
+                formatted = `${v.substring(0, 2)}/${v.substring(2, 4)}/${v.substring(4)}`;
+            } else if (v.length > 2) {
+                formatted = `${v.substring(0, 2)}/${v.substring(2)}`;
+            } else {
+                formatted = v;
+            }
+            this.value = formatted;
+        });
+
+        editBtnDobCalendar?.addEventListener('click', function() {
+            try {
+                if (editDobPickerHidden && editDobPickerHidden.showPicker) {
+                    editDobPickerHidden.showPicker();
+                } else if (editDobPickerHidden) {
+                    editDobPickerHidden.focus();
+                }
+            } catch(e) {
+                if (editDobPickerHidden) editDobPickerHidden.focus();
+            }
+        });
+
+        editDobPickerHidden?.addEventListener('change', function() {
+            if (this.value && editDobInput) {
+                editDobInput.value = formatToDDMMYYYY(this.value);
+            }
+        });
+
+        // Edit Modal Manual Session Input & Auto Passing Year
+        document.getElementById('editSession')?.addEventListener('input', function() {
+            handleSessionInputChange(this, document.getElementById('editPassingYear'), document.getElementById('editMarksheetIssueDate'));
+        });
+
+        document.getElementById('editSession')?.addEventListener('change', function() {
+            handleSessionInputChange(this, document.getElementById('editPassingYear'), document.getElementById('editMarksheetIssueDate'));
+        });
+
+        document.getElementById('editPassingYear')?.addEventListener('input', function() {
+            const issueInput = document.getElementById('editMarksheetIssueDate');
+            if (issueInput && !issueInput.dataset.userEdited) {
+                issueInput.value = SBSEData.getMarksheetIssueDate({
+                    session: document.getElementById('editSession')?.value || '2025-2026',
+                    passingYear: this.value || '2026'
+                });
+            }
+        });
+
+        document.getElementById('editMarksheetIssueDate')?.addEventListener('input', function() {
+            this.dataset.userEdited = 'true';
+        });
+
+        // Open Edit Student Modal
+        window.openEditStudentModal = function(studentId) {
+            const student = SBSEData.getStudentById(studentId);
+            if (!student) {
+                showToastNotification('Student record not found.', 'error');
+                return;
+            }
+
+            document.getElementById('editStudentId').value = student.id;
+            document.getElementById('editStudentName').value = student.name || '';
+            document.getElementById('editRollNumber').value = student.rollNumber || '';
+            document.getElementById('editRegistrationNumber').value = student.registrationNumber || '';
+            document.getElementById('editDob').value = formatToDDMMYYYY(student.dob) || student.dob || '';
+            document.getElementById('editFatherName').value = student.fatherName || '';
+            document.getElementById('editMotherName').value = student.motherName || '';
+            document.getElementById('editCourseSelect').value = student.course || 'MATRICULATION';
+            document.getElementById('editSession').value = student.session || '2025-2026';
+            document.getElementById('editPassingYear').value = student.passingYear || '2026';
+            
+            const issueInput = document.getElementById('editMarksheetIssueDate');
+            if (issueInput) {
+                issueInput.value = student.issueDate || SBSEData.getMarksheetIssueDate(student);
+                issueInput.dataset.userEdited = student.issueDate ? 'true' : '';
+            }
+
+            document.getElementById('editAddress').value = student.address || '';
+
+            // Header Badges
+            document.getElementById('editModalStudentNameBadge').textContent = `EDITING: ${student.name}`;
+            document.getElementById('editModalRollBadge').textContent = `(ROLL: ${student.rollNumber})`;
+            
+            const statusBadge = document.getElementById('editModalResultStatusBadge');
+            if (statusBadge) {
+                if (student.status === 'PASS') {
+                    statusBadge.className = 'badge-status badge-pass';
+                    statusBadge.textContent = `PASS (${student.percentage}%)`;
+                } else if (student.status === 'FAIL') {
+                    statusBadge.className = 'badge-status badge-fail';
+                    statusBadge.textContent = `FAIL (${student.percentage}%)`;
+                } else {
+                    statusBadge.className = 'badge-status badge-pending';
+                    statusBadge.textContent = 'PENDING';
+                }
+            }
+
+            // Render subjects with student's currently enrolled subjects checked
+            const enrolledCodes = (student.enrolledSubjects && student.enrolledSubjects.length > 0)
+                ? student.enrolledSubjects.map(s => s.code)
+                : SBSEData.getDefaultSubjects(student.course).map(s => s.code);
+            renderEditSubjectSelectionGrid(student.course, enrolledCodes);
+
+            document.getElementById('editStudentModal').style.display = 'block';
+            document.getElementById('editStudentName').focus();
+        };
+
+        window.closeEditStudentModal = function() {
+            const modal = document.getElementById('editStudentModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // Edit Student Form Submit Handler
+        document.getElementById('editStudentForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const studentId = document.getElementById('editStudentId').value;
+            const existingStudent = SBSEData.getStudentById(studentId);
+            if (!existingStudent) {
+                showToastNotification('Could not find existing student to update.', 'error');
+                return;
+            }
+
+            const name = document.getElementById('editStudentName').value.trim().toUpperCase();
+            const roll = document.getElementById('editRollNumber').value.trim().toUpperCase();
+            const regNo = document.getElementById('editRegistrationNumber').value.trim().toUpperCase();
+            const rawDob = document.getElementById('editDob').value.trim();
+            const father = document.getElementById('editFatherName').value.trim().toUpperCase();
+            const mother = document.getElementById('editMotherName').value.trim().toUpperCase();
+            const course = document.getElementById('editCourseSelect').value.toUpperCase();
+            const session = document.getElementById('editSession').value.trim().toUpperCase();
+            const year = document.getElementById('editPassingYear').value.trim();
+            const address = document.getElementById('editAddress').value.trim().toUpperCase();
+
+            const dobFormatted = formatToDDMMYYYY(rawDob);
+
+            if (!name || !roll || !regNo || !dobFormatted || !father || !mother || !course || !session || !year || !address) {
+                showToastNotification('Please fill all required student information fields.', 'error');
+                return;
+            }
+
+            // Check if roll was changed to another student's roll number
+            const allStudents = SBSEData.getStudents();
+            const duplicate = allStudents.find(s => 
+                String(s.id) !== String(studentId) && 
+                s.rollNumber && s.rollNumber.trim().toUpperCase() === roll
+            );
+            if (duplicate) {
+                showToastNotification(`Roll number "${roll}" is already assigned to ${duplicate.name}!`, 'error');
+                return;
+            }
+
+            // Gather selected subjects
+            const selectedCheckboxes = document.querySelectorAll('.edit-subject-checkbox:checked');
+            let enrolledSubjects = [];
+            selectedCheckboxes.forEach(cb => {
+                enrolledSubjects.push({
+                    code: cb.getAttribute('data-code'),
+                    name: cb.getAttribute('data-name'),
+                    maxMarks: parseFloat(cb.getAttribute('data-max')) || 100
+                });
+            });
+
+            if (enrolledSubjects.length === 0) {
+                enrolledSubjects = SBSEData.getDefaultSubjects(course);
+            }
+
+            const rawIssueDate = document.getElementById('editMarksheetIssueDate')?.value.trim();
+            const calculatedIssueDate = SBSEData.getMarksheetIssueDate({
+                issueDate: rawIssueDate,
+                rollNumber: roll,
+                session,
+                passingYear: year
+            });
+
+            const updatedStudentPayload = {
+                id: studentId,
+                name,
+                rollNumber: roll,
+                registrationNumber: regNo,
+                dob: dobFormatted,
+                fatherName: father,
+                motherName: mother,
+                course,
+                session,
+                passingYear: year,
+                issueDate: calculatedIssueDate,
+                address,
+                enrolledSubjects
+            };
+
+            try {
+                SBSEData.saveStudent(updatedStudentPayload);
+                closeEditStudentModal();
+                showToastNotification(`Student "${name}" details updated successfully!`, 'success');
+
+                renderDashboard();
+                populateStudentSelectDropdown();
+                populateSessionFilter();
+
+                // If currently selected in Marks tab, refresh that view!
+                const currentSelectVal = document.getElementById('studentSelect')?.value;
+                if (currentSelectVal && String(currentSelectVal) === String(studentId)) {
+                    selectStudentForMarks(studentId);
+                }
+            } catch (err) {
+                showToastNotification(err.message || 'Error updating student details', 'error');
+            }
+        });
+
+        // Close edit modal on outside click
+        window.addEventListener('click', function(e) {
+            const editModal = document.getElementById('editStudentModal');
+            if (e.target === editModal) {
+                closeEditStudentModal();
+            }
+        });
+
         // Print marksheet with student's name as the document/file title
         window.printCurrentMarksheet = function() {
             if (!currentViewingStudent) {
@@ -1667,7 +2141,12 @@
 
         // Close modal on escape key
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeMarksheetModal();
+            if (e.key === 'Escape') {
+                closeMarksheetModal();
+                closeEditStudentModal();
+                if (typeof closeDeviceTransferModal === 'function') closeDeviceTransferModal();
+                if (typeof closeCloudSettingsModal === 'function') closeCloudSettingsModal();
+            }
         });
 
         // Toast Notification System
