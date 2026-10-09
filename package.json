@@ -1,0 +1,16 @@
+{
+  "name": "sikkim-board-of-school-education",
+  "version": "1.0.0",
+  "description": "Sikkim Board of School Education - Student Portal & Administrative Results Management System",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "server": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

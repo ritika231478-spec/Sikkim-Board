@@ -857,34 +857,67 @@
         </div>
     </div>
 
-    <!-- CLOUD SETTINGS MODAL -->
+    <!-- CLOUD & SERVER SETTINGS MODAL -->
     <div id="cloudSettingsModal" class="modal-overlay">
-        <div class="modal-container" style="max-width: 600px;">
+        <div class="modal-container" style="max-width: 650px;">
             <div class="modal-header">
-                <h3><i class="fas fa-cloud text-warning"></i> Cloud Database Configuration</h3>
+                <h3><i class="fas fa-server text-warning"></i> Server & Cloud Multi-Device Sync</h3>
                 <button type="button" class="modal-close-btn" onclick="closeCloudSettingsModal()">&times;</button>
             </div>
             <div class="modal-body" style="padding: 24px;">
-                <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 15px;">
-                    Sikkim Board student records automatically synchronize live across all devices using the cloud database endpoint below.
+                <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 18px;">
+                    Sikkim Board student records synchronize live across all devices using the dedicated <strong>Server REST API (Render / Express)</strong> and automatic cloud backups.
                 </p>
 
-                <div class="form-group" style="margin-bottom: 18px;">
-                    <label for="cloudEndpointInput"><strong>Cloud Sync Endpoint URL</strong></label>
-                    <input type="url" id="cloudEndpointInput" class="form-control" placeholder="https://your-project.firebaseio.com/students.json" style="font-family: monospace; font-size: 0.9rem;">
+                <!-- 1. Dedicated Backend API Section -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label for="backendApiInput" style="margin: 0; font-weight: 700; color: var(--primary);">
+                            <i class="fas fa-network-wired me-1"></i> Backend Server API URL (Render / Local)
+                        </label>
+                        <span id="backendStatusTag" class="badge-status" style="background: #e2e8f0; color: #4a5568; font-size: 0.75rem;">
+                            Checking...
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="url" id="backendApiInput" class="form-control" placeholder="https://your-service.onrender.com (or leave blank for same-origin)" style="font-family: monospace; font-size: 0.88rem;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="testBackendApiConnection()" style="white-space: nowrap;">
+                            <i class="fas fa-plug me-1"></i> Test
+                        </button>
+                    </div>
                     <small style="color: var(--text-gray); display: block; margin-top: 6px;">
-                        Supports Firebase Realtime Database (<code>https://&lt;id&gt;.firebaseio.com/students.json</code>) or any REST JSON endpoint.
+                        When hosted on Render, leave blank or set to your Render URL. GitHub Pages users can paste their Render web service URL here for 100% direct multi-device sync.
                     </small>
                 </div>
 
-                <div style="background: #ebf8ff; border: 1px solid #bee3f8; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.85rem; color: #2b6cb0;">
-                    <i class="fas fa-info-circle me-1"></i> Default cloud endpoint is pre-configured so any device opening the admin panel or results portal automatically sees the latest records.
+                <!-- 2. Cloud Fallback / Google Drive Webhook -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+                    <label for="cloudEndpointInput" style="font-weight: 700; color: var(--primary); display: block; margin-bottom: 8px;">
+                        <i class="fas fa-cloud me-1"></i> Secondary Cloud Replica / Google Sheets Webhook
+                    </label>
+                    <input type="url" id="cloudEndpointInput" class="form-control" placeholder="https://kvdb.io/... or Google Apps Script URL" style="font-family: monospace; font-size: 0.88rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                        <small style="color: var(--text-gray);">
+                            Real-time backup store ensuring zero data loss even if the server restarts.
+                        </small>
+                        <button type="button" class="btn btn-link btn-sm" style="font-size: 0.78rem; padding: 0; color: var(--accent);" onclick="copyGoogleAppsScriptCode()">
+                            <i class="fas fa-file-code me-1"></i> Copy Google Sheets Script
+                        </button>
+                    </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetCloudEndpointDefault()">
-                        <i class="fas fa-undo me-1"></i> Reset to Default
-                    </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="resetCloudEndpointDefault()">
+                            <i class="fas fa-undo me-1"></i> Reset Defaults
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background: #dd6b20; color: white;" onclick="forcePushLocalToCloudAction()" title="Upload all local students on this PC to the server">
+                            <i class="fas fa-cloud-upload-alt me-1"></i> Push Local to Server
+                        </button>
+                        <button type="button" class="btn btn-sm" style="background: #e53e3e; color: white;" onclick="restoreFromCloudAction()" title="Wipe local and re-fetch clean copy directly from server">
+                            <i class="fas fa-cloud-download-alt me-1"></i> Restore from Server
+                        </button>
+                    </div>
                     <div style="display: flex; gap: 10px;">
                         <button type="button" class="btn btn-secondary" onclick="closeCloudSettingsModal()">Cancel</button>
                         <button type="button" class="btn btn-primary" onclick="saveCloudEndpointConfig()">
@@ -2186,11 +2219,11 @@
             if (statusText) statusText.textContent = 'Syncing...';
 
             try {
-                await SBSEData.syncFromRemote(true);
+                const students = await SBSEData.syncFromRemote(true);
                 renderDashboard();
                 populateStudentSelectDropdown();
-                updateSyncStatusDisplay('synced');
-                showToastNotification('Multi-device sync complete! All records updated.', 'success');
+                updateSyncStatusDisplay('synced', students.length);
+                showToastNotification(`Multi-device sync complete! ${students.length} student records synchronized across all devices.`, 'success');
             } catch (e) {
                 console.error(e);
                 updateSyncStatusDisplay('error');
@@ -2200,19 +2233,20 @@
             }
         }
 
-        function updateSyncStatusDisplay(status) {
+        function updateSyncStatusDisplay(status, count) {
             const dot = document.getElementById('syncStatusDot');
             const text = document.getElementById('syncStatusText');
             const timeText = document.getElementById('syncLastTimeText');
             const lastTime = localStorage.getItem('sbse_last_sync_time');
+            const studentCount = (count !== undefined && count !== null) ? count : SBSEData.getStudents().length;
 
             if (dot && text) {
                 if (status === 'synced') {
                     dot.style.color = '#48bb78';
-                    text.textContent = 'Cloud Sync: Active';
+                    text.textContent = `Cloud Sync: Active (${studentCount} Students)`;
                 } else if (status === 'local_only') {
                     dot.style.color = '#ecc94b';
-                    text.textContent = 'Local Mode';
+                    text.textContent = `Local Mode (${studentCount} Students)`;
                 } else {
                     dot.style.color = '#e53e3e';
                     text.textContent = 'Sync Offline';
@@ -2226,6 +2260,40 @@
                 } catch(e) {}
             }
         }
+
+        // Force push local students to cloud
+        window.forcePushLocalToCloudAction = async function() {
+            const students = SBSEData.getStudents();
+            if (confirm(`Upload all ${students.length} students currently on this PC to the cloud database?`)) {
+                const raw = SBSEData.getRawStudents();
+                const ok = await SBSEData.rawPushToCloud(raw);
+                if (ok) {
+                    showToastNotification(`Successfully uploaded ${students.length} students to cloud!`, 'success');
+                    updateSyncStatusDisplay('synced', students.length);
+                    closeCloudSettingsModal();
+                } else {
+                    showToastNotification('Failed to push to cloud. Check network connection.', 'error');
+                }
+            }
+        };
+
+        // Restore clean dataset from cloud
+        window.restoreFromCloudAction = async function() {
+            if (confirm('This will replace records on this PC with the clean version from the cloud. Any unsaved local edits will be updated. Continue?')) {
+                const remote = await SBSEData.fetchRemoteStudents();
+                if (remote && Array.isArray(remote)) {
+                    SBSEData.saveRawStudents(remote);
+                    renderDashboard();
+                    populateStudentSelectDropdown();
+                    const active = SBSEData.getStudents();
+                    updateSyncStatusDisplay('synced', active.length);
+                    showToastNotification(`Successfully restored ${active.length} students from cloud!`, 'success');
+                    closeCloudSettingsModal();
+                } else {
+                    showToastNotification('Could not download clean copy from cloud. Check network connection.', 'error');
+                }
+            }
+        };
 
         // Device Transfer Modal
         function openDeviceTransferModal() {
@@ -2269,7 +2337,8 @@
                 closeDeviceTransferModal();
                 renderDashboard();
                 populateStudentSelectDropdown();
-                showToastNotification(`Successfully imported ${imported.length} student records to this device!`, 'success');
+                updateSyncStatusDisplay('synced', imported.length);
+                showToastNotification(`Successfully merged ${imported.length} student records into this device!`, 'success');
             } catch (e) {
                 showToastNotification('Invalid transfer code. Please copy and paste again.', 'error');
             }
@@ -2284,7 +2353,8 @@
                     const list = SBSEData.importFromJsonString(e.target.result);
                     renderDashboard();
                     populateStudentSelectDropdown();
-                    showToastNotification(`Successfully imported ${list.length} student records from JSON!`, 'success');
+                    updateSyncStatusDisplay('synced', list.length);
+                    showToastNotification(`Successfully merged ${list.length} student records from JSON!`, 'success');
                 } catch(err) {
                     showToastNotification('Failed to parse JSON file: ' + err.message, 'error');
                 }
@@ -2293,42 +2363,111 @@
             event.target.value = '';
         }
 
-        // Cloud Settings Modal
-        function openCloudSettingsModal() {
-            const input = document.getElementById('cloudEndpointInput');
-            if (input) input.value = SBSEData.getCloudSyncUrl();
+        // Cloud & Server Settings Modal
+        async function openCloudSettingsModal() {
+            const cloudInput = document.getElementById('cloudEndpointInput');
+            const backendInput = document.getElementById('backendApiInput');
+            if (cloudInput) cloudInput.value = SBSEData.getCloudSyncUrl();
+            if (backendInput) backendInput.value = localStorage.getItem('sbse_backend_api_url') || '';
             document.getElementById('cloudSettingsModal').style.display = 'block';
+            await checkBackendApiStatus();
         }
 
         function closeCloudSettingsModal() {
             document.getElementById('cloudSettingsModal').style.display = 'none';
         }
 
+        async function checkBackendApiStatus() {
+            const tag = document.getElementById('backendStatusTag');
+            if (!tag) return;
+            tag.style.background = '#e2e8f0';
+            tag.style.color = '#4a5568';
+            tag.textContent = 'Checking...';
+            const backend = SBSEData.getBackendUrl();
+            try {
+                const start = performance.now();
+                const res = await fetch(`${backend}/api/health?_t=${Date.now()}`, { cache: 'no-store' });
+                const dur = Math.round(performance.now() - start);
+                if (res.ok) {
+                    const info = await res.json();
+                    tag.style.background = '#c6f6d5';
+                    tag.style.color = '#22543d';
+                    tag.innerHTML = `<i class="fas fa-check-circle me-1"></i> Connected (${info.totalStudents} Students, ${dur}ms)`;
+                    return;
+                }
+            } catch (e) {}
+            tag.style.background = '#fed7d7';
+            tag.style.color = '#742a2a';
+            tag.innerHTML = `<i class="fas fa-times-circle me-1"></i> Offline / Standalone`;
+        }
+
+        async function testBackendApiConnection() {
+            const input = document.getElementById('backendApiInput');
+            const url = input ? input.value.trim().replace(/\/+$/, '') : '';
+            try {
+                showToastNotification('Testing connection...', 'info');
+                const start = performance.now();
+                const res = await fetch(`${url}/api/health?_t=${Date.now()}`, { cache: 'no-store' });
+                const dur = Math.round(performance.now() - start);
+                if (res.ok) {
+                    const info = await res.json();
+                    showToastNotification(`Connection successful! ${info.totalStudents} students on server (${dur}ms)`, 'success');
+                    await checkBackendApiStatus();
+                } else {
+                    showToastNotification(`Server responded with HTTP ${res.status}`, 'error');
+                }
+            } catch (err) {
+                showToastNotification('Could not reach server. Verify URL and make sure server is running.', 'error');
+            }
+        }
+
         function saveCloudEndpointConfig() {
-            const input = document.getElementById('cloudEndpointInput');
-            const val = input ? input.value.trim() : '';
-            SBSEData.setCloudSyncUrl(val);
+            const cloudInput = document.getElementById('cloudEndpointInput');
+            const backendInput = document.getElementById('backendApiInput');
+            
+            const cloudVal = cloudInput ? cloudInput.value.trim() : '';
+            const backendVal = backendInput ? backendInput.value.trim() : '';
+
+            SBSEData.setCloudSyncUrl(cloudVal);
+            SBSEData.setBackendUrl(backendVal);
+
             closeCloudSettingsModal();
-            showToastNotification('Cloud sync endpoint updated!', 'success');
+            showToastNotification('Server & Cloud configuration saved!', 'success');
             syncNowWithCloud();
         }
 
         function resetCloudEndpointDefault() {
             SBSEData.setCloudSyncUrl(null);
-            const input = document.getElementById('cloudEndpointInput');
-            if (input) input.value = SBSEData.getCloudSyncUrl();
-            showToastNotification('Reset cloud sync to default endpoint.', 'success');
+            SBSEData.setBackendUrl(null);
+            const cloudInput = document.getElementById('cloudEndpointInput');
+            const backendInput = document.getElementById('backendApiInput');
+            if (cloudInput) cloudInput.value = SBSEData.getCloudSyncUrl();
+            if (backendInput) backendInput.value = '';
+            checkBackendApiStatus();
+            showToastNotification('Reset server and cloud configuration to defaults.', 'success');
+        }
+
+        function copyGoogleAppsScriptCode() {
+            if (navigator.clipboard && SBSEData.APPS_SCRIPT_TEMPLATE) {
+                navigator.clipboard.writeText(SBSEData.APPS_SCRIPT_TEMPLATE).then(() => {
+                    showToastNotification('Google Apps Script code copied to clipboard!', 'success');
+                }).catch(() => {
+                    prompt('Copy Google Apps Script code:', SBSEData.APPS_SCRIPT_TEMPLATE);
+                });
+            } else {
+                prompt('Copy Google Apps Script code:', SBSEData.APPS_SCRIPT_TEMPLATE);
+            }
         }
 
         // Listen for automatic multi-tab and remote sync updates
-        window.addEventListener('sbse_data_updated', function() {
+        window.addEventListener('sbse_data_updated', function(e) {
             renderDashboard();
             populateStudentSelectDropdown();
-            updateSyncStatusDisplay('synced');
+            updateSyncStatusDisplay('synced', e.detail?.students?.length);
         });
 
         window.addEventListener('sbse_sync_status_changed', function(e) {
-            updateSyncStatusDisplay(e.detail?.status || 'synced');
+            updateSyncStatusDisplay(e.detail?.status || 'synced', e.detail?.count);
         });
 
         // Initialize on load
@@ -2339,18 +2478,18 @@
 
             // Initial remote sync
             try {
-                await SBSEData.syncFromRemote();
+                const list = await SBSEData.syncFromRemote();
                 renderDashboard();
                 populateStudentSelectDropdown();
-                updateSyncStatusDisplay('synced');
+                updateSyncStatusDisplay('synced', list ? list.length : undefined);
             } catch(e) {}
 
-            // Background periodic sync every 25 seconds while panel is open
+            // Background periodic sync every 15 seconds while panel is open
             setInterval(async () => {
                 try {
                     await SBSEData.syncFromRemote();
                 } catch(e) {}
-            }, 25000);
+            }, 15000);
         });
     </script>
 </body>

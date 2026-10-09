@@ -215,7 +215,24 @@ const SBSEData = {
     isPracticalSubject: isPracticalSubject,
     practicalCodes: SBSE_PRACTICAL_CODES,
 
-    // Get all students
+    // Raw storage accessor (includes tombstones for multi-device sync)
+    getRawStudents: function() {
+        const raw = localStorage.getItem(SBSE_STORAGE_KEY);
+        if (!raw) return [];
+        try {
+            const list = JSON.parse(raw);
+            return Array.isArray(list) ? list : [];
+        } catch (e) {
+            return [];
+        }
+    },
+
+    saveRawStudents: function(list) {
+        if (!Array.isArray(list)) return;
+        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(list));
+    },
+
+    // Get all active students (cleanly filtered and uppercase formatted)
     getStudents: function() {
         // One-time purge of legacy demo students
         if (!localStorage.getItem('sbse_demo_purged_2026_v2')) {
@@ -245,18 +262,20 @@ const SBSEData = {
                 localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify([]));
                 return [];
             }
-            // Ensure DOB is in DD/MM/YYYY and all text is Uppercase
-            return list.map(s => ({
-                ...s,
-                name: (s.name || '').toUpperCase(),
-                fatherName: (s.fatherName || '').toUpperCase(),
-                motherName: (s.motherName || '').toUpperCase(),
-                address: (s.address || '').toUpperCase(),
-                rollNumber: (s.rollNumber || '').toUpperCase(),
-                registrationNumber: (s.registrationNumber || '').toUpperCase(),
-                session: (s.session || '').toUpperCase(),
-                dob: formatToDDMMYYYY(s.dob)
-            }));
+            // Filter out tombstones and deleted students
+            return list
+                .filter(s => !s._deleted && s.status !== 'DELETED')
+                .map(s => ({
+                    ...s,
+                    name: (s.name || '').toUpperCase(),
+                    fatherName: (s.fatherName || '').toUpperCase(),
+                    motherName: (s.motherName || '').toUpperCase(),
+                    address: (s.address || '').toUpperCase(),
+                    rollNumber: (s.rollNumber || '').toUpperCase(),
+                    registrationNumber: (s.registrationNumber || '').toUpperCase(),
+                    session: (s.session || '').toUpperCase(),
+                    dob: formatToDDMMYYYY(s.dob)
+                }));
         } catch (e) {
             console.error('Error parsing students', e);
             return [];
@@ -265,7 +284,8 @@ const SBSEData = {
 
     // Save student (insert or update)
     saveStudent: function(student) {
-        const students = this.getStudents();
+        const rawStudents = this.getRawStudents();
+        const activeStudents = this.getStudents();
         const normalizedRoll = (student.rollNumber || '').trim().toUpperCase();
         
         // Capitalize all fields & format DOB
@@ -284,9 +304,9 @@ const SBSEData = {
             enrolledSubjects: student.enrolledSubjects && student.enrolledSubjects.length > 0 ? student.enrolledSubjects : this.getDefaultSubjects(student.course)
         };
 
-        // Check for duplicate roll number on a DIFFERENT student
+        // Check for duplicate roll number on a DIFFERENT active student
         if (sanitized.id) {
-            const conflict = students.find(s => 
+            const conflict = activeStudents.find(s => 
                 s.rollNumber && s.rollNumber.trim().toUpperCase() === normalizedRoll && 
                 String(s.id) !== String(sanitized.id)
             );
@@ -297,14 +317,15 @@ const SBSEData = {
 
         let existingIndex = -1;
         if (sanitized.id) {
-            existingIndex = students.findIndex(s => String(s.id) === String(sanitized.id));
+            existingIndex = rawStudents.findIndex(s => String(s.id) === String(sanitized.id));
         }
         if (existingIndex < 0 && normalizedRoll) {
-            existingIndex = students.findIndex(s => s.rollNumber && s.rollNumber.trim().toUpperCase() === normalizedRoll);
+            existingIndex = rawStudents.findIndex(s => s.rollNumber && s.rollNumber.trim().toUpperCase() === normalizedRoll);
         }
         
+        const nowIso = new Date().toISOString();
         if (existingIndex >= 0) {
-            const currentStudent = students[existingIndex];
+            const currentStudent = rawStudents[existingIndex];
             let updatedResults = currentStudent.results || [];
 
             // If enrolledSubjects was modified and student already had results:
@@ -340,26 +361,33 @@ const SBSEData = {
                 sanitized.status = calc.status;
             }
 
-            students[existingIndex] = { ...currentStudent, ...sanitized, updatedAt: new Date().toISOString() };
+            rawStudents[existingIndex] = {
+                ...currentStudent,
+                ...sanitized,
+                _deleted: false,
+                updatedAt: nowIso
+            };
         } else {
-            students.unshift({
+            rawStudents.unshift({
                 id: sanitized.id || 'STU_' + Date.now(),
-                createdAt: new Date().toISOString(),
+                createdAt: nowIso,
+                updatedAt: nowIso,
                 results: [],
                 totalMarks: 0,
                 maxTotal: 0,
                 percentage: 0,
                 grade: 'PENDING',
                 status: 'PENDING',
+                _deleted: false,
                 ...sanitized
             });
         }
         
-        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(students));
+        this.saveRawStudents(rawStudents);
         if (typeof this.pushToRemote === 'function') {
             this.pushToRemote();
         }
-        return students;
+        return this.getStudents();
     },
 
     // Update existing student helper
@@ -381,15 +409,30 @@ const SBSEData = {
         return students.find(s => s.rollNumber && s.rollNumber.trim().toUpperCase() === normalized) || null;
     },
 
-    // Delete student
+    // Delete student (marks as tombstone to synchronize deletion across all devices)
     deleteStudent: function(id) {
-        let students = this.getStudents();
-        students = students.filter(s => String(s.id) !== String(id));
-        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(students));
+        const rawStudents = this.getRawStudents();
+        const target = rawStudents.find(s => String(s.id) === String(id));
+        const nowIso = new Date().toISOString();
+        if (target) {
+            target._deleted = true;
+            target.status = 'DELETED';
+            target.deletedAt = nowIso;
+            target.updatedAt = nowIso;
+        } else {
+            rawStudents.push({
+                id: String(id),
+                _deleted: true,
+                status: 'DELETED',
+                deletedAt: nowIso,
+                updatedAt: nowIso
+            });
+        }
+        this.saveRawStudents(rawStudents);
         if (typeof this.pushToRemote === 'function') {
             this.pushToRemote();
         }
-        return students;
+        return this.getStudents();
     },
 
     // Get default subjects for a course
@@ -477,20 +520,23 @@ const SBSEData = {
 
     // Update marks for student
     saveResults: function(studentId, marksArray) {
-        const students = this.getStudents();
-        const student = students.find(s => String(s.id) === String(studentId));
+        const rawStudents = this.getRawStudents();
+        const student = rawStudents.find(s => String(s.id) === String(studentId));
         if (!student) return null;
 
         const calc = this.calculateResult(marksArray);
+        const nowIso = new Date().toISOString();
         student.results = marksArray;
         student.totalMarks = calc.totalMarks;
         student.maxTotal = calc.maxTotal;
         student.percentage = calc.percentage;
         student.grade = calc.grade;
         student.status = calc.status;
-        student.resultsUpdated = new Date().toISOString();
+        student.resultsUpdated = nowIso;
+        student.updatedAt = nowIso;
+        student._deleted = false;
 
-        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(students));
+        this.saveRawStudents(rawStudents);
         if (typeof this.pushToRemote === 'function') {
             this.pushToRemote();
         }
@@ -498,8 +544,30 @@ const SBSEData = {
     },
 
     // =========================================================================
-    // MULTI-DEVICE & CLOUD SYNCHRONIZATION ENGINE
+    // MULTI-DEVICE, SERVER & CLOUD SYNCHRONIZATION ENGINE
     // =========================================================================
+    getBackendUrl: function() {
+        const custom = localStorage.getItem('sbse_backend_api_url');
+        if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
+        
+        if (typeof window !== 'undefined' && window.location) {
+            const host = window.location.hostname;
+            // If running on localhost or on Render, auto-connect to same-origin API
+            if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('onrender.com')) {
+                return window.location.origin;
+            }
+        }
+        return '';
+    },
+
+    setBackendUrl: function(url) {
+        if (url && typeof url === 'string' && url.trim()) {
+            localStorage.setItem('sbse_backend_api_url', url.trim().replace(/\/+$/, ''));
+        } else {
+            localStorage.removeItem('sbse_backend_api_url');
+        }
+    },
+
     getCloudSyncUrl: function() {
         return localStorage.getItem('sbse_cloud_sync_url') || 'https://kvdb.io/DTxNzTGCuLFEq7MFBhGgtw/sikkimStudents';
     },
@@ -516,132 +584,355 @@ const SBSEData = {
         return 'data/students.json';
     },
 
-    // Push local students array to remote cloud endpoint
-    pushToRemote: async function() {
-        const url = this.getCloudSyncUrl();
-        if (!url) return false;
-        try {
-            const students = this.getStudents();
-            const method = url.includes('.firebaseio.com') || url.includes('kvdb.io') ? 'PUT' : 'POST';
-            const res = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(students)
-            });
-            if (res.ok) {
-                localStorage.setItem('sbse_last_sync_time', new Date().toISOString());
-                localStorage.setItem('sbse_sync_status', 'synced');
-                window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
-                    detail: { status: 'synced', time: new Date().toISOString() }
-                }));
-                return true;
-            }
-        } catch (e) {
-            console.warn('SBSEData: pushToRemote failed (offline/local fallback active)', e);
-            localStorage.setItem('sbse_sync_status', 'local_only');
-            window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
-                detail: { status: 'local_only', time: new Date().toISOString() }
-            }));
-        }
-        return false;
-    },
-
-    // Pull from cloud & data/students.json, merge with local storage
-    syncFromRemote: async function(force = false) {
-        let remoteStudents = null;
-        let sourceUsed = '';
-
-        // 1. Try cloud endpoint first
-        const cloudUrl = this.getCloudSyncUrl();
-        if (cloudUrl) {
+    // Fetch live uncached students from Server API, Cloud Endpoint, or static JSON
+    fetchRemoteStudents: async function() {
+        const backend = this.getBackendUrl();
+        
+        // 1. Primary: Server REST API (Render / Express / Node.js)
+        if (backend !== undefined && backend !== null) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4500);
-                const res = await fetch(cloudUrl, { signal: controller.signal });
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                const res = await fetch(`${backend}/api/students?includeDeleted=true&_t=${Date.now()}`, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    signal: controller.signal
+                });
                 clearTimeout(timeoutId);
                 if (res.ok) {
                     const data = await res.json();
                     if (Array.isArray(data)) {
-                        remoteStudents = data;
-                        sourceUsed = 'cloud';
+                        this._lastSourceUsed = 'server';
+                        return data;
                     }
                 }
             } catch (e) {
-                // Cloud unavailable or timeout
+                // Server might be sleeping or unreachable from this network
             }
         }
 
-        // 2. Fallback to data/students.json
-        if (!remoteStudents || remoteStudents.length === 0) {
+        // 2. Secondary: Cloud Key-Value Endpoint (kvdb.io or custom cloud endpoint)
+        const url = this.getCloudSyncUrl();
+        if (url) {
             try {
-                const res = await fetch(this.getDataFileUrl() + '?t=' + Date.now());
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                const cacheBuster = (url.includes('?') ? '&' : '?') + '_t=' + Date.now() + '&_r=' + Math.random().toString(36).substring(2, 7);
+                const res = await fetch(url + cacheBuster, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    },
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
                 if (res.ok) {
                     const data = await res.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        remoteStudents = data;
-                        sourceUsed = 'file';
+                    if (Array.isArray(data)) {
+                        this._lastSourceUsed = 'cloud';
+                        return data;
                     }
                 }
             } catch (e) {
-                // File unavailable
+                console.warn('SBSEData: fetchRemoteStudents cloud error', e);
             }
         }
 
+        // 3. Tertiary: Local / Static data/students.json
+        try {
+            const res = await fetch(this.getDataFileUrl() + '?_t=' + Date.now(), { cache: 'no-store' });
+            if (res.ok) {
+                let text = await res.text();
+                if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+                const data = JSON.parse(text);
+                if (Array.isArray(data) && data.length > 0) {
+                    this._lastSourceUsed = 'file';
+                    return data;
+                }
+            }
+        } catch (e) {}
+
+        return null;
+    },
+
+    // Intelligent bidirectional merge between local and remote datasets
+    mergeDatasets: function(localList, remoteList) {
+        if (!Array.isArray(localList)) localList = [];
+        if (!Array.isArray(remoteList)) remoteList = [];
+
+        const map = new Map();
+
+        const getKey = (s) => {
+            if (!s) return '';
+            const roll = (s.rollNumber || '').trim().toUpperCase();
+            if (roll) return 'ROLL:' + roll;
+            if (s.id) return 'ID:' + String(s.id).trim();
+            return '';
+        };
+
+        const getTime = (s) => {
+            if (!s) return 0;
+            const t = s.updatedAt || s.resultsUpdated || s.deletedAt || s.createdAt || 0;
+            const d = new Date(t).getTime();
+            return isNaN(d) ? 0 : d;
+        };
+
+        // 1. Seed map with local students
+        localList.forEach(item => {
+            const k = getKey(item);
+            if (k) map.set(k, { ...item });
+        });
+
+        let changedCount = 0;
+
+        // 2. Merge remote students
+        remoteList.forEach(remote => {
+            const k = getKey(remote);
+            if (!k) return;
+
+            if (!map.has(k)) {
+                map.set(k, { ...remote });
+                changedCount++;
+            } else {
+                const local = map.get(k);
+
+                // Handle Deletion conflicts
+                if (remote._deleted || local._deleted || remote.status === 'DELETED' || local.status === 'DELETED') {
+                    const localDel = (local._deleted || local.status === 'DELETED') ? new Date(local.deletedAt || local.updatedAt || 0).getTime() : 0;
+                    const remoteDel = (remote._deleted || remote.status === 'DELETED') ? new Date(remote.deletedAt || remote.updatedAt || 0).getTime() : 0;
+                    const maxDel = Math.max(localDel, remoteDel);
+                    const localAct = (!local._deleted && local.status !== 'DELETED') ? getTime(local) : 0;
+                    const remoteAct = (!remote._deleted && remote.status !== 'DELETED') ? getTime(remote) : 0;
+                    const maxAct = Math.max(localAct, remoteAct);
+
+                    if (maxDel > maxAct) {
+                        map.set(k, {
+                            ...(local._deleted ? local : remote),
+                            _deleted: true,
+                            status: 'DELETED',
+                            deletedAt: new Date(maxDel).toISOString()
+                        });
+                        return;
+                    }
+                }
+
+                // Both active: compare timestamps
+                const remoteTime = getTime(remote);
+                const localTime = getTime(local);
+
+                if (remoteTime > localTime) {
+                    map.set(k, { ...local, ...remote });
+                    changedCount++;
+                } else if (localTime > remoteTime) {
+                    map.set(k, { ...remote, ...local });
+                } else {
+                    // Equal timestamp: if remote has results and local doesn't, take remote
+                    const localHasRes = Array.isArray(local.results) && local.results.length > 0;
+                    const remoteHasRes = Array.isArray(remote.results) && remote.results.length > 0;
+                    if (!localHasRes && remoteHasRes) {
+                        map.set(k, { ...local, ...remote });
+                        changedCount++;
+                    }
+                }
+            }
+        });
+
+        return {
+            merged: Array.from(map.values()),
+            changedCount
+        };
+    },
+
+    // Raw push to cloud endpoint
+    rawPushToCloud: async function(records) {
+        const url = this.getCloudSyncUrl();
+        if (!url || !Array.isArray(records)) return false;
+        try {
+            const method = url.includes('.firebaseio.com') || url.includes('kvdb.io') ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(records)
+            });
+            if (res.ok) {
+                localStorage.setItem('sbse_last_sync_time', new Date().toISOString());
+                localStorage.setItem('sbse_sync_status', 'synced');
+                return true;
+            }
+        } catch (e) {
+            console.warn('SBSEData: rawPushToCloud error', e);
+        }
+        return false;
+    },
+
+    // Push local data safely by merging with remote first, then saving to Server API & Cloud
+    pushToRemote: async function() {
+        try {
+            const remoteStudents = await this.fetchRemoteStudents();
+            const localRaw = this.getRawStudents();
+            let toPush = localRaw;
+
+            if (remoteStudents && Array.isArray(remoteStudents)) {
+                const { merged } = this.mergeDatasets(localRaw, remoteStudents);
+                this.saveRawStudents(merged);
+                toPush = merged;
+            }
+
+            let pushedToServer = false;
+            const backend = this.getBackendUrl();
+            if (backend !== undefined && backend !== null) {
+                try {
+                    const res = await fetch(`${backend}/api/sync`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate'
+                        },
+                        body: JSON.stringify({ students: toPush })
+                    });
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json.students && Array.isArray(json.students)) {
+                            this.saveRawStudents(json.rawRecords || json.students);
+                        }
+                        pushedToServer = true;
+                    }
+                } catch (e) {}
+            }
+
+            // Also replicate to cloud key-value store as backup
+            const pushedToCloud = await this.rawPushToCloud(toPush);
+
+            if (pushedToServer || pushedToCloud) {
+                localStorage.setItem('sbse_last_sync_time', new Date().toISOString());
+                localStorage.setItem('sbse_sync_status', 'synced');
+                const activeCount = this.getStudents().length;
+                window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
+                    detail: { status: 'synced', time: new Date().toISOString(), count: activeCount }
+                }));
+                return true;
+            }
+        } catch (e) {
+            console.warn('SBSEData: pushToRemote error', e);
+        }
+
+        localStorage.setItem('sbse_sync_status', 'local_only');
+        window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
+            detail: { status: 'local_only', time: new Date().toISOString() }
+        }));
+        return false;
+    },
+
+    // Pull from Server API & Cloud, merge with local storage
+    syncFromRemote: async function(force = false) {
+        let remoteStudents = await this.fetchRemoteStudents();
+        let sourceUsed = this._lastSourceUsed || 'cloud';
+
         if (!remoteStudents || !Array.isArray(remoteStudents)) {
+            localStorage.setItem('sbse_sync_status', 'local_only');
+            window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
+                detail: { status: 'local_only', time: new Date().toISOString() }
+            }));
             return this.getStudents();
         }
 
-        // Merge remote with local records
-        const localStudents = this.getStudents();
-        const mergedMap = new Map();
+        const localRaw = this.getRawStudents();
+        const { merged, changedCount } = this.mergeDatasets(localRaw, remoteStudents);
 
-        // Populate map with local students
-        localStudents.forEach(s => {
-            const key = (s.rollNumber || s.id || '').trim().toUpperCase();
-            if (key) mergedMap.set(key, s);
-        });
-
-        let changesCount = 0;
-        remoteStudents.forEach(remote => {
-            if (!remote) return;
-            const key = (remote.rollNumber || remote.id || '').trim().toUpperCase();
-            if (!key) return;
-
-            if (!mergedMap.has(key)) {
-                mergedMap.set(key, remote);
-                changesCount++;
-            } else {
-                const local = mergedMap.get(key);
-                const localHasResults = local.results && local.results.length > 0;
-                const remoteHasResults = remote.results && remote.results.length > 0;
-                const remoteTime = new Date(remote.updatedAt || remote.resultsUpdated || remote.createdAt || 0).getTime();
-                const localTime = new Date(local.updatedAt || local.resultsUpdated || local.createdAt || 0).getTime();
-
-                if ((!localHasResults && remoteHasResults) || (remoteTime > localTime)) {
-                    mergedMap.set(key, { ...local, ...remote });
-                    changesCount++;
-                }
-            }
-        });
-
-        const mergedList = Array.from(mergedMap.values());
-        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(mergedList));
+        this.saveRawStudents(merged);
         localStorage.setItem('sbse_last_sync_time', new Date().toISOString());
         localStorage.setItem('sbse_sync_status', 'synced');
 
-        // If local had extra records, push back to cloud
-        if (mergedList.length > (remoteStudents ? remoteStudents.length : 0)) {
-            this.pushToRemote();
+        const activeLocal = merged.filter(s => !s._deleted && s.status !== 'DELETED');
+        const activeRemote = remoteStudents.filter(s => !s._deleted && s.status !== 'DELETED');
+
+        // If local had records that remote was missing, push merged list to update server & cloud
+        if (changedCount > 0 || activeLocal.length !== activeRemote.length || force) {
+            const backend = this.getBackendUrl();
+            if (backend !== undefined && backend !== null) {
+                try {
+                    await fetch(`${backend}/api/sync`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate'
+                        },
+                        body: JSON.stringify({ students: merged })
+                    });
+                } catch(e) {}
+            }
+            await this.rawPushToCloud(merged);
         }
 
         window.dispatchEvent(new CustomEvent('sbse_data_updated', {
-            detail: { students: mergedList, source: sourceUsed, changesCount }
+            detail: { students: this.getStudents(), source: sourceUsed, changedCount }
         }));
         window.dispatchEvent(new CustomEvent('sbse_sync_status_changed', {
-            detail: { status: 'synced', time: new Date().toISOString() }
+            detail: { status: 'synced', time: new Date().toISOString(), count: activeLocal.length, source: sourceUsed }
         }));
 
-        return mergedList;
+        return this.getStudents();
+    },
+
+    // Google Sheets / Apps Script Integration (DSVV Style)
+    APPS_SCRIPT_TEMPLATE: `// Dev / Sikkim Board - Google Sheets Live Sync Script
+function doPost(e) {
+  try {
+    var raw = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
+    var payload = JSON.parse(raw);
+    var action = payload.action || 'save';
+    var props = PropertiesService.getScriptProperties();
+    if (action === 'save' && payload.data) {
+      props.setProperty('SBSE_DATABASE', JSON.stringify(payload.data));
+      props.setProperty('LAST_UPDATED', new Date().toISOString());
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', updatedAt: new Date().toISOString() })).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'get') {
+      var saved = props.getProperty('SBSE_DATABASE');
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: saved ? JSON.parse(saved) : [] })).setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+function doGet(e) {
+  var props = PropertiesService.getScriptProperties();
+  var saved = props.getProperty('SBSE_DATABASE');
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: saved ? JSON.parse(saved) : [] })).setMimeType(ContentService.MimeType.JSON);
+}`,
+
+    pushToGoogleDrive: async function(endpointUrl) {
+        if (!endpointUrl || !endpointUrl.startsWith('http')) throw new Error('Please enter a valid Google Apps Script Web App URL.');
+        const students = this.getRawStudents();
+        await fetch(endpointUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'save', data: students })
+        });
+        return { status: 'success', message: 'Data synced to Google Drive & Sheets' };
+    },
+
+    pullFromGoogleDrive: async function(endpointUrl) {
+        if (!endpointUrl || !endpointUrl.startsWith('http')) throw new Error('Please enter a valid Google Apps Script Web App URL.');
+        const res = await fetch(`${endpointUrl}?action=get&t=${Date.now()}`);
+        const data = await res.json();
+        if (data.status === 'success' && Array.isArray(data.data)) {
+            const { merged } = this.mergeDatasets(this.getRawStudents(), data.data);
+            this.saveRawStudents(merged);
+            this.pushToRemote();
+            return this.getStudents();
+        }
+        throw new Error('No data found in Google Drive');
     },
 
     // Download students.json file backup
@@ -672,20 +963,24 @@ const SBSEData = {
         const json = decodeURIComponent(escape(atob(code.trim())));
         const list = JSON.parse(json);
         if (!Array.isArray(list)) throw new Error('Invalid student data payload.');
-        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(list));
+        const localRaw = this.getRawStudents();
+        const { merged } = this.mergeDatasets(localRaw, list);
+        this.saveRawStudents(merged);
         this.pushToRemote();
-        window.dispatchEvent(new CustomEvent('sbse_data_updated', { detail: { students: list } }));
-        return list;
+        window.dispatchEvent(new CustomEvent('sbse_data_updated', { detail: { students: this.getStudents() } }));
+        return this.getStudents();
     },
 
     // Import from JSON text / file
     importFromJsonString: function(jsonStr) {
         const list = JSON.parse(jsonStr);
         if (!Array.isArray(list)) throw new Error('Uploaded JSON file must contain a list of student records.');
-        localStorage.setItem(SBSE_STORAGE_KEY, JSON.stringify(list));
+        const localRaw = this.getRawStudents();
+        const { merged } = this.mergeDatasets(localRaw, list);
+        this.saveRawStudents(merged);
         this.pushToRemote();
-        window.dispatchEvent(new CustomEvent('sbse_data_updated', { detail: { students: list } }));
-        return list;
+        window.dispatchEvent(new CustomEvent('sbse_data_updated', { detail: { students: this.getStudents() } }));
+        return this.getStudents();
     },
 
     // Automatic initialization & multi-tab synchronization
@@ -694,21 +989,38 @@ const SBSEData = {
         window.addEventListener('storage', (e) => {
             if (e.key === SBSE_STORAGE_KEY) {
                 try {
-                    const updated = JSON.parse(e.newValue || '[]');
                     window.dispatchEvent(new CustomEvent('sbse_data_updated', {
-                        detail: { students: updated, source: 'localStorage' }
+                        detail: { students: this.getStudents(), source: 'localStorage' }
                     }));
                 } catch(err) {}
             }
         });
 
+        // Auto-sync when window regains focus (e.g. user switches tabs/apps)
+        window.addEventListener('focus', () => {
+            this.syncFromRemote().catch(() => {});
+        });
+
+        // Auto-sync when network reconnects
+        window.addEventListener('online', () => {
+            this.syncFromRemote(true).catch(() => {});
+        });
+
         // Perform background sync on startup
         this.syncFromRemote().catch(e => console.warn('Background sync error', e));
+
+        // Periodic sync every 15 seconds while browser page is open
+        if (typeof window !== 'undefined' && typeof window.document !== 'undefined' && typeof setInterval !== 'undefined') {
+            setInterval(() => {
+                this.syncFromRemote().catch(() => {});
+            }, 15000);
+        }
     }
 };
 
-// Auto-run init on load
-if (typeof window !== 'undefined') {
+// Auto-run init on load in browser
+if (typeof window !== 'undefined' && typeof window.document !== 'undefined') {
+    window.SBSEData = SBSEData;
     SBSEData.init();
 }
 

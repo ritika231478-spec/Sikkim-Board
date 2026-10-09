@@ -1,0 +1,290 @@
+[
+    {
+        "name": "INTEGRATION TEST STUDENT",
+        "rollNumber": "SBSE-2026-999",
+        "registrationNumber": "SBSE/REG/2026/999",
+        "dob": "01/01/2000",
+        "fatherName": "TEST FATHER",
+        "motherName": "TEST MOTHER",
+        "course": "MATRICULATION",
+        "session": "2025-2026",
+        "passingYear": "2026",
+        "address": "",
+        "_deleted": false,
+        "updatedAt": "2026-10-09T08:57:08.609Z",
+        "id": "STU_1791536228610",
+        "createdAt": "2026-10-09T08:57:08.609Z"
+    },
+    {
+        "id": "STU_1790832332157",
+        "createdAt": "2026-10-01T05:25:32.157Z",
+        "results": [
+            {
+                "subjectCode": "301",
+                "subjectName": "HINDI",
+                "maxMarks": 100,
+                "theory": 66,
+                "practical": "XX",
+                "marks": 66,
+                "total": 66
+            },
+            {
+                "subjectCode": "302",
+                "subjectName": "ENGLISH",
+                "maxMarks": 100,
+                "theory": 63,
+                "practical": "XX",
+                "marks": 63,
+                "total": 63
+            },
+            {
+                "subjectCode": "311",
+                "subjectName": "MATHEMATICS",
+                "maxMarks": 100,
+                "theory": 78,
+                "practical": "XX",
+                "marks": 78,
+                "total": 78
+            },
+            {
+                "subjectCode": "312",
+                "subjectName": "PHYSICS",
+                "maxMarks": 100,
+                "theory": 54,
+                "practical": 12,
+                "marks": 66,
+                "total": 66
+            },
+            {
+                "subjectCode": "313",
+                "subjectName": "CHEMISTRY",
+                "maxMarks": 100,
+                "theory": 50,
+                "practical": 18,
+                "marks": 68,
+                "total": 68
+            },
+            {
+                "subjectCode": "314",
+                "subjectName": "BIOLOGY",
+                "maxMarks": 100,
+                "theory": 59,
+                "practical": 16,
+                "marks": 75,
+                "total": 75
+            }
+        ],
+        "totalMarks": 416,
+        "maxTotal": 600,
+        "percentage": 69.33,
+        "grade": "B",
+        "status": "PASS",
+        "name": "RAUNAK DROLIA",
+        "rollNumber": "SBSE-2017-105",
+        "registrationNumber": "SBSE/REG/2017/234",
+        "dob": "10/08/1999",
+        "fatherName": "UMESH KUMAR DROLIA",
+        "motherName": "MANJU DEVI",
+        "course": "INTERMEDIATE",
+        "session": "2017 - 2018",
+        "passingYear": "2018",
+        "issueDate": "11/08/2018",
+        "address": "WARD NO. 10, MARACHIUJAGAR,PO: HASSANPUR S.MIL,DIST: SAMASTIPUR, BIHAR, 848205",
+        "enrolledSubjects": [
+            {
+                "code": "301",
+                "name": "HINDI",
+                "maxMarks": 100
+            },
+            {
+                "code": "302",
+                "name": "ENGLISH",
+                "maxMarks": 100
+            },
+            {
+                "code": "311",
+                "name": "MATHEMATICS",
+                "maxMarks": 100
+            },
+            {
+                "code": "312",
+                "name": "PHYSICS",
+                "maxMarks": 100
+            },
+            {
+                "code": "313",
+                "name": "CHEMISTRY",
+                "maxMarks": 100
+            },
+            {
+                "code": "314",
+                "name": "BIOLOGY",
+                "maxMarks": 100
+            }
+        ],
+        "resultsUpdated": "2026-10-01T05:26:24.921Z",
+        "updatedAt": "2026-10-09T07:07:32.523Z"
+    },
+    {
+        "id": "STU_1791458090821",
+        "createdAt": "2026-10-08T11:14:50.821Z",
+        "results": [
+            {
+                "subjectCode": "202",
+                "subjectName": "ENGLISH",
+                "maxMarks": 100,
+                "theory": 69,
+                "practical": "XX",
+                "marks": 69,
+                "total": 69
+            },
+            {
+                "subjectCode": "231",
+                "subjectName": "NEPALI",
+                "maxMarks": 100,
+                "theory": 68,
+                "practical": "XX",
+                "marks": 68,
+                "total": 68
+            },
+            {
+                "subjectCode": "211",
+                "subjectName": "MATHEMATICS",
+                "maxMarks": 100,
+                "theory": 72,
+                "practical": 0,
+                "marks": 72,
+                "total": 72
+            },
+            {
+                "subjectCode": "212",
+                "subjectName": "SCIENCE AND TECHNOLOGY",
+                "maxMarks": 100,
+                "theory": 79,
+                "practical": 0,
+                "marks": 79,
+                "total": 79
+            },
+            {
+                "subjectCode": "213",
+                "subjectName": "SOCIAL SCIENCE",
+                "maxMarks": 100,
+                "theory": 70,
+                "practical": 0,
+                "marks": 70,
+                "total": 70
+            },
+            {
+                "subjectCode": "229",
+                "subjectName": "DATA ENTRY OPERATIONS",
+                "maxMarks": 100,
+                "theory": 65,
+                "practical": 0,
+                "marks": 65,
+                "total": 65
+            }
+        ],
+        "totalMarks": 423,
+        "maxTotal": 600,
+        "percentage": 70.5,
+        "grade": "B+",
+        "status": "PASS",
+        "name": "THOTI VIKRAM",
+        "rollNumber": "SBSE-2024-255",
+        "registrationNumber": "SBSE/REG/2024/201",
+        "dob": "01/01/1990",
+        "fatherName": "THOTI GANGULAPPA",
+        "motherName": "GOURI BERA",
+        "course": "MATRICULATION",
+        "session": "2025-2026",
+        "passingYear": "2026",
+        "issueDate": "11/08/2026",
+        "address": "ABC, JAMSHEDPUR",
+        "enrolledSubjects": [
+            {
+                "code": "202",
+                "name": "ENGLISH",
+                "maxMarks": 100
+            },
+            {
+                "code": "231",
+                "name": "NEPALI",
+                "maxMarks": 100
+            },
+            {
+                "code": "211",
+                "name": "MATHEMATICS",
+                "maxMarks": 100
+            },
+            {
+                "code": "212",
+                "name": "SCIENCE AND TECHNOLOGY",
+                "maxMarks": 100
+            },
+            {
+                "code": "213",
+                "name": "SOCIAL SCIENCE",
+                "maxMarks": 100
+            },
+            {
+                "code": "229",
+                "name": "DATA ENTRY OPERATIONS",
+                "maxMarks": 100
+            }
+        ],
+        "resultsUpdated": "2026-10-08T11:15:35.246Z"
+    },
+    {
+        "id": "STU_TEST1",
+        "createdAt": "2026-10-09T06:33:11.534Z",
+        "results": [],
+        "totalMarks": 0,
+        "maxTotal": 0,
+        "percentage": 0,
+        "grade": "PENDING",
+        "status": "PENDING",
+        "name": "RAMESH SHARMA",
+        "rollNumber": "SBSE-2025-101",
+        "registrationNumber": "SBSE/REG/2024/001",
+        "dob": "15/08/2005",
+        "fatherName": "SURESH SHARMA",
+        "motherName": "GEETA SHARMA",
+        "course": "MATRICULATION",
+        "session": "2024-2025",
+        "passingYear": "2025",
+        "address": "GANGTOK, SIKKIM",
+        "enrolledSubjects": [
+            {
+                "code": "202",
+                "name": "ENGLISH",
+                "maxMarks": 100
+            },
+            {
+                "code": "231",
+                "name": "NEPALI",
+                "maxMarks": 100
+            },
+            {
+                "code": "211",
+                "name": "MATHEMATICS",
+                "maxMarks": 100
+            },
+            {
+                "code": "212",
+                "name": "SCIENCE AND TECHNOLOGY",
+                "maxMarks": 100
+            },
+            {
+                "code": "213",
+                "name": "SOCIAL SCIENCE",
+                "maxMarks": 100
+            },
+            {
+                "code": "229",
+                "name": "DATA ENTRY OPERATIONS",
+                "maxMarks": 100
+            }
+        ],
+        "updatedAt": "2026-10-09T14:22:48.3812496+05:30"
+    }
+]
